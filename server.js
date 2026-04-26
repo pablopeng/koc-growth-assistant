@@ -12,7 +12,7 @@ loadEnv(path.join(root, ".env"));
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || "0.0.0.0";
 const model = process.env.KIMI_MODEL || "kimi-k2.6";
-const kimiBaseUrl = process.env.KIMI_BASE_URL || "https://api.moonshot.cn/v1";
+const kimiBaseUrl = process.env.KIMI_BASE_URL || "https://api.moonshot.ai/v1";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -177,8 +177,9 @@ async function callKimi(messages) {
     },
     body: JSON.stringify({
       model,
-      temperature: 1,
+      temperature: 0.8,
       response_format: { type: "json_object" },
+      thinking: { type: "disabled" },
       messages
     })
   });

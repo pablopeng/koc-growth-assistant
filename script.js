@@ -873,9 +873,20 @@ const switchTab = (tabId) => {
   });
 };
 
+const showOnboarding = () => {
+  $("landing")?.classList.add("hidden");
+  $("appShell")?.classList.add("hidden");
+  $("generationScreen")?.classList.add("hidden");
+  $("onboarding")?.classList.remove("hidden");
+  setWizardProgress();
+};
+
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => switchTab(tab.dataset.tab));
 });
+
+$("startDiagnosis")?.addEventListener("click", showOnboarding);
+$("startDiagnosisTop")?.addEventListener("click", showOnboarding);
 
 $("regeneratePlan").addEventListener("click", () => {
   generateWithApi(true);
@@ -899,10 +910,7 @@ $("restartOnboarding").addEventListener("click", () => {
   aiPlan = null;
   contentPlan = null;
   wizardStep = 0;
-  setWizardProgress();
-  $("appShell").classList.add("hidden");
-  $("generationScreen").classList.add("hidden");
-  $("onboarding").classList.remove("hidden");
+  showOnboarding();
 });
 
 const setWizardProgress = () => {
@@ -975,6 +983,7 @@ $("nextStep").addEventListener("click", () => {
     timeBudget: $("wizardTimeBudget").value,
     pain: `${finalBottleneck}。我的优势是${finalEdge}，已有素材包括：${$("wizardAssets").value}。`
   });
+  $("landing")?.classList.add("hidden");
   $("onboarding").classList.add("hidden");
   generateWithApi(true);
 });

@@ -39,7 +39,7 @@ npm start
 ```text
 KIMI_API_KEY=你的 Kimi API Key
 KIMI_MODEL=kimi-k2.6
-KIMI_BASE_URL=https://api.moonshot.cn/v1
+KIMI_BASE_URL=https://api.moonshot.ai/v1
 HOST=0.0.0.0
 ```
 
