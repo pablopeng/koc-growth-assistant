@@ -177,7 +177,7 @@ async function callKimi(messages) {
     },
     body: JSON.stringify({
       model,
-      temperature: 0.8,
+      temperature: 0.6,
       response_format: { type: "json_object" },
       thinking: { type: "disabled" },
       messages

@@ -22,7 +22,7 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background: var(--bg);
-  font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Optima", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 button,
@@ -38,10 +38,11 @@ button {
 
 .landing {
   min-height: 100vh;
-  padding: 28px;
+  padding: 32px;
   background:
-    radial-gradient(circle at 12% 8%, rgba(198, 154, 52, 0.13), transparent 28%),
-    linear-gradient(135deg, #f8f7f0 0%, #eef3ee 100%);
+    radial-gradient(circle at 14% 14%, rgba(198, 154, 52, 0.14), transparent 26%),
+    radial-gradient(circle at 88% 18%, rgba(23, 79, 61, 0.11), transparent 25%),
+    linear-gradient(135deg, #f8f4e8 0%, #eef3ec 58%, #f7f7f2 100%);
 }
 
 .landing.hidden {
@@ -51,9 +52,9 @@ button {
 .landing-shell {
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 28px;
-  width: min(1120px, 100%);
-  min-height: calc(100vh - 56px);
+  gap: 22px;
+  width: min(1180px, 100%);
+  min-height: calc(100vh - 64px);
   margin: 0 auto;
 }
 
@@ -62,12 +63,19 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: 58px;
+}
+
+.nav-note {
+  color: #536257;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .landing-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
-  gap: 22px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  gap: 18px;
   align-items: stretch;
 }
 
@@ -75,61 +83,71 @@ button {
 .hero-panel,
 .landing-metrics {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: var(--shadow);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 26px 70px rgba(25, 36, 29, 0.08);
+  backdrop-filter: blur(18px);
 }
 
 .hero-copy {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 560px;
-  padding: clamp(28px, 5vw, 64px);
+  min-height: 600px;
+  padding: clamp(34px, 6vw, 78px);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(247, 246, 238, 0.72)),
+    radial-gradient(circle at 100% 0%, rgba(23, 79, 61, 0.08), transparent 34%);
 }
 
 .hero-copy h2 {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0;
-  font-size: clamp(38px, 6vw, 76px);
-  line-height: 0.96;
-  letter-spacing: -0.07em;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  font-size: clamp(46px, 7vw, 92px);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.08em;
 }
 
 .hero-text {
-  max-width: 620px;
-  margin: 26px 0 0;
-  color: #4f5a52;
-  font-size: 19px;
-  line-height: 1.8;
+  max-width: 660px;
+  margin: 30px 0 0;
+  color: #46554b;
+  font-size: 18px;
+  line-height: 1.9;
 }
 
 .hero-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 34px;
+  gap: 16px;
+  margin-top: 38px;
 }
 
 .hero-actions .primary-button {
   width: auto;
-  min-width: 220px;
-  padding: 0 24px;
+  min-width: 236px;
+  min-height: 52px;
+  padding: 0 28px;
+  border-radius: 999px;
 }
 
 .hero-actions span {
-  color: var(--muted);
+  max-width: 190px;
+  color: #667066;
   font-size: 13px;
   font-weight: 800;
+  line-height: 1.55;
 }
 
 .hero-panel {
   display: grid;
   grid-template-rows: auto 1fr;
-  padding: 20px;
+  padding: 24px;
   background:
-    linear-gradient(180deg, rgba(23, 79, 61, 0.08), transparent 44%),
-    rgba(255, 255, 255, 0.82);
+    linear-gradient(180deg, rgba(23, 79, 61, 0.1), transparent 46%),
+    rgba(255, 255, 255, 0.76);
 }
 
 .hero-panel-head {
@@ -137,7 +155,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 18px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -149,27 +167,27 @@ button {
 }
 
 .hero-panel-head b {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .hero-flow {
   display: grid;
   align-content: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .hero-flow article {
   position: relative;
-  padding: 18px 18px 18px 58px;
-  border: 1px solid #dfe3da;
-  border-radius: 8px;
-  background: #fbfcf7;
+  padding: 20px 20px 20px 62px;
+  border: 1px solid rgba(223, 227, 218, 0.92);
+  border-radius: 12px;
+  background: rgba(251, 252, 247, 0.88);
 }
 
 .hero-flow article span {
   position: absolute;
-  left: 18px;
-  top: 20px;
+  left: 20px;
+  top: 22px;
   display: grid;
   place-items: center;
   width: 28px;
@@ -183,7 +201,7 @@ button {
 
 .hero-flow h3 {
   margin: 0 0 6px;
-  font-size: 20px;
+  font-size: 21px;
 }
 
 .hero-flow p {
@@ -199,7 +217,7 @@ button {
 }
 
 .landing-metrics div {
-  padding: 18px 22px;
+  padding: 20px 24px;
   border-right: 1px solid var(--line);
 }
 
@@ -213,9 +231,10 @@ button {
 }
 
 .landing-metrics b {
-  margin-bottom: 4px;
-  font-size: 28px;
-  letter-spacing: -0.04em;
+  margin-bottom: 6px;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  font-size: 30px;
+  letter-spacing: -0.06em;
 }
 
 .landing-metrics span {
