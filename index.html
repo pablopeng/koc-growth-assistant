@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KOC 起号助手 Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <section class="onboarding" id="onboarding">
+      <div class="onboarding-card">
+        <div class="brand compact">
+          <span class="brand-mark">G</span>
+          <div>
+            <p class="eyebrow">Creator Diagnosis</p>
+            <h1>KOC 起号助手</h1>
+          </div>
+        </div>
+
+        <div class="wizard-progress">
+          <span class="active"></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="wizard-step active" data-step="0">
+          <p class="eyebrow">Step 01</p>
+          <h2>你想做哪类内容？</h2>
+          <p class="helper">先选一个大方向，后面系统会根据你的经历再细化定位。</p>
+          <div class="choice-grid" data-bind="niche">
+            <button class="choice selected" data-value="职场成长" type="button">职场成长</button>
+            <button class="choice" data-value="健身减脂" type="button">健身减脂</button>
+            <button class="choice" data-value="本地探店" type="button">本地探店</button>
+            <button class="choice" data-value="美妆护肤" type="button">美妆护肤</button>
+            <button class="choice" data-value="读书学习" type="button">读书学习</button>
+            <button class="choice custom-choice" data-value="" type="button">其他方向</button>
+          </div>
+          <input class="custom-input hidden" data-custom-for="niche" placeholder="输入你的内容方向，比如母婴、宠物、摄影、小说推文" />
+        </div>
+
+        <div class="wizard-step" data-step="1">
+          <p class="eyebrow">Step 02</p>
+          <h2>你现在处在哪个阶段？</h2>
+          <p class="helper">同一个赛道，不同阶段的选题顺序完全不同。</p>
+          <div class="choice-grid" data-bind="stage">
+            <button class="choice selected" data-value="准备起号，还没正式发布" type="button">准备起号</button>
+            <button class="choice" data-value="已经发过内容，但数据不稳定" type="button">发过但不稳定</button>
+            <button class="choice" data-value="有少量粉丝，想形成稳定栏目" type="button">想稳定更新</button>
+            <button class="choice" data-value="准备商业化，但担心内容变硬广" type="button">准备商业化</button>
+            <button class="choice custom-choice" data-value="" type="button">其他阶段</button>
+          </div>
+          <input class="custom-input hidden" data-custom-for="stage" placeholder="描述你现在的账号阶段" />
+        </div>
+
+        <div class="wizard-step" data-step="2">
+          <p class="eyebrow">Step 03</p>
+          <h2>你的内容优势更接近哪一种？</h2>
+          <p class="helper">不用想得很完美，选最像你的那个就好。</p>
+          <div class="choice-grid" data-bind="edge">
+            <button class="choice selected" data-value="真实经历" type="button">我有真实经历</button>
+            <button class="choice" data-value="方法整理" type="button">我擅长整理方法</button>
+            <button class="choice" data-value="测评对比" type="button">我能做测评对比</button>
+            <button class="choice" data-value="陪伴记录" type="button">我愿意记录变化</button>
+            <button class="choice custom-choice" data-value="" type="button">其他优势</button>
+          </div>
+          <input class="custom-input hidden" data-custom-for="edge" placeholder="描述你的内容优势，比如资源多、审美好、表达强" />
+        </div>
+
+        <div class="wizard-step" data-step="3">
+          <p class="eyebrow">Step 04</p>
+          <h2>你现在最卡在哪里？</h2>
+          <p class="helper">这里会直接影响账号定位和第一周内容顺序。</p>
+          <div class="choice-grid" data-bind="bottleneck">
+            <button class="choice selected" data-value="不知道自己该做什么定位" type="button">定位不清楚</button>
+            <button class="choice" data-value="每天都不知道发什么" type="button">选题低效</button>
+            <button class="choice" data-value="内容发了但互动很少" type="button">互动很少</button>
+            <button class="choice" data-value="想接商单但怕伤害账号信任" type="button">商业化焦虑</button>
+            <button class="choice custom-choice" data-value="" type="button">其他卡点</button>
+          </div>
+          <input class="custom-input hidden" data-custom-for="bottleneck" placeholder="描述你现在最卡的地方" />
+        </div>
+
+        <div class="wizard-step" data-step="4">
+          <p class="eyebrow">Step 05</p>
+          <h2>最后补充一点背景</h2>
+          <p class="helper">这一步帮助系统避开泛泛建议，生成更像你的账号策略。</p>
+          <div class="quick-form">
+            <label>
+              你是谁
+              <input id="wizardProfile" value="刚工作一年的女生，在互联网运营岗" />
+            </label>
+            <label>
+              想吸引谁
+              <input id="wizardAudience" value="刚入职场的新人、想提升效率和表达能力的大学生" />
+            </label>
+            <label>
+              你手里已有的素材
+              <input id="wizardAssets" value="一些真实工作经历、工具使用截图、复盘笔记" />
+            </label>
+            <div class="field-grid">
+              <label>
+                主平台
+                <select id="wizardPlatform">
+                  <option>小红书</option>
+                  <option>抖音</option>
+                  <option>视频号</option>
+                  <option>B站</option>
+                  <option>公众号</option>
+                </select>
+              </label>
+              <label>
+                每周投入
+                <select id="wizardTimeBudget">
+                  <option>3-5 小时</option>
+                  <option>5-8 小时</option>
+                  <option>8-12 小时</option>
+                  <option>12 小时以上</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-actions">
+          <button class="ghost-button" id="prevStep" type="button">上一步</button>
+          <button class="primary-button" id="nextStep" type="button">下一步</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="generation-screen hidden" id="generationScreen">
+      <div class="generation-card">
+        <div class="generation-main">
+          <div>
+            <p class="eyebrow">Generating Strategy</p>
+            <h2>正在分析你的 KOC 起号路径</h2>
+            <p id="loadingText">读取画像与阶段，判断第一周内容顺序...</p>
+            <p class="wait-note" id="waitNote">请耐心等待 1-2 分钟。</p>
+            <div class="loading-bar"><span id="loadingBar"></span></div>
+            <div class="loading-steps">
+              <span class="active">画像</span>
+              <span>定位</span>
+              <span>选题</span>
+              <span>内容</span>
+            </div>
+          </div>
+          <aside class="tip-feed">
+            <div class="tip-feed-header">
+              <span>起号观察</span>
+            </div>
+            <div id="singleTip" class="single-tip"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <main class="app-shell hidden" id="appShell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">G</span>
+          <div>
+            <p class="eyebrow">AI Content Growth</p>
+            <h1>KOC 起号助手</h1>
+          </div>
+        </div>
+
+        <section class="panel input-panel">
+          <div class="panel-title">
+            <span>创作者画像</span>
+            <button class="ghost-button" id="restartOnboarding" type="button">重新填写</button>
+          </div>
+          <div id="profileSummary" class="profile-summary"></div>
+          <button class="primary-button" id="regeneratePlan" type="button">
+            重新生成方案
+          </button>
+          <p class="api-status" id="apiStatus">静态预览模式</p>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Demo Flow</p>
+            <h2>从模糊想法到一周可执行内容计划</h2>
+          </div>
+          <div class="status-strip">
+            <span>定位</span>
+            <span>选题</span>
+            <span>创作</span>
+            <span>发布</span>
+          </div>
+        </header>
+
+        <nav class="tabs" aria-label="结果模块">
+          <button class="tab active" data-tab="positioning" type="button">账号定位</button>
+          <button class="tab" data-tab="topics" type="button">起号路径</button>
+          <button class="tab" data-tab="content" type="button">内容生成</button>
+          <button class="tab" data-tab="publish" type="button">发布优化</button>
+        </nav>
+
+        <section class="result-grid">
+          <article class="panel result-panel tab-page active" id="positioning">
+            <div class="section-heading">
+              <span class="step-index">01</span>
+              <div>
+                <p class="eyebrow">Positioning</p>
+                <h3>AI 账号定位诊断</h3>
+              </div>
+            </div>
+            <div id="researchResult" class="research-strip"></div>
+            <div id="positioningResult" class="output-stack"></div>
+          </article>
+
+          <article class="panel result-panel tab-page" id="topics">
+            <div class="section-heading">
+              <span class="step-index">02</span>
+              <div>
+                <p class="eyebrow">Growth Path</p>
+                <h3>第一周阶梯式起号路径</h3>
+              </div>
+            </div>
+          <div class="topic-toolbar">
+              <span id="topicHint">从建立信任开始，再验证方向，最后轻转化</span>
+              <button class="ghost-button" id="shuffleTopics" type="button">换一组角度</button>
+            </div>
+            <div id="topicsResult" class="topic-list"></div>
+          </article>
+
+          <article class="panel result-panel tab-page" id="content">
+            <div class="section-heading">
+              <span class="step-index">03</span>
+              <div>
+                <p class="eyebrow">Creation Desk</p>
+                <h3>图文与视频脚本</h3>
+              </div>
+            </div>
+            <div id="contentResult" class="content-columns"></div>
+          </article>
+
+          <article class="panel result-panel tab-page" id="publish">
+            <div class="section-heading">
+              <span class="step-index">04</span>
+              <div>
+                <p class="eyebrow">Publish Strategy</p>
+                <h3>发布与互动优化</h3>
+              </div>
+            </div>
+            <div id="publishResult" class="output-stack"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
