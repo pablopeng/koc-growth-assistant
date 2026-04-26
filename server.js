@@ -61,9 +61,11 @@ const server = http.createServer(async (req, res) => {
 
     sendJson(res, 405, { error: "Method not allowed" });
   } catch (error) {
+    console.error(error);
     sendJson(res, 500, {
       error: "Server error",
-      message: error.message
+      message: error.message,
+      code: error.code || "SERVER_ERROR"
     });
   }
 });

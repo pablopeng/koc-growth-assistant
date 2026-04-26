@@ -807,8 +807,9 @@ const generateWithApi = async (resetTopic = true) => {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || "API 请求失败");
+      const error = await response.json().catch(() => null);
+      const message = error?.message || error?.error || `API 请求失败（HTTP ${response.status}）`;
+      throw new Error(message);
     }
 
     aiPlan = await response.json();
@@ -846,8 +847,9 @@ const generateSelectedContent = async () => {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || "内容生成失败");
+      const error = await response.json().catch(() => null);
+      const message = error?.message || error?.error || `内容生成失败（HTTP ${response.status}）`;
+      throw new Error(message);
     }
 
     contentPlan = await response.json();
