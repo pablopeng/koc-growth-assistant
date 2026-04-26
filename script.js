@@ -124,6 +124,7 @@ let contentPlan = null;
 let contentMode = "图文 + 视频";
 let isContentGenerating = false;
 let creatorProfile = { ...sample };
+const STORAGE_KEY = "koc-growth-workspace-v1";
 const wizardState = {
   niche: "职场成长",
   stage: "准备起号，还没正式发布",
@@ -135,6 +136,68 @@ const $ = (id) => document.getElementById(id);
 
 const getFormData = () => ({ ...creatorProfile });
 const isFileMode = () => window.location.protocol === "file:";
+
+const safeJsonParse = (value) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+const persistWorkspace = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      creatorProfile,
+      wizardState,
+      aiPlan,
+      contentPlan,
+      selectedTopicIndex,
+      topicPoolIndex,
+      contentMode
+    }));
+  } catch {
+    // Local storage can fail in private mode; the product should still work.
+  }
+};
+
+const syncWizardFromProfile = () => {
+  const data = getFormData();
+  Object.assign(wizardState, {
+    niche: data.niche || wizardState.niche,
+    stage: data.stage || wizardState.stage,
+    edge: data.edge || wizardState.edge,
+    bottleneck: data.bottleneck || wizardState.bottleneck
+  });
+  if ($("wizardProfile")) $("wizardProfile").value = data.profile || "";
+  if ($("wizardAudience")) $("wizardAudience").value = data.audience || "";
+  if ($("wizardAssets")) $("wizardAssets").value = data.assets || "";
+  if ($("wizardPlatform")) $("wizardPlatform").value = data.platform || "小红书";
+  if ($("wizardTimeBudget")) $("wizardTimeBudget").value = data.timeBudget || "3-5 小时";
+};
+
+const restoreWorkspace = () => {
+  const saved = safeJsonParse(localStorage.getItem(STORAGE_KEY));
+  if (!saved?.creatorProfile) return false;
+  creatorProfile = { ...sample, ...saved.creatorProfile };
+  Object.assign(wizardState, saved.wizardState || {});
+  aiPlan = saved.aiPlan || null;
+  contentPlan = saved.contentPlan || null;
+  selectedTopicIndex = Number(saved.selectedTopicIndex || 0);
+  topicPoolIndex = Number(saved.topicPoolIndex || 0);
+  contentMode = saved.contentMode || "图文 + 视频";
+  syncWizardFromProfile();
+  renderAll(false);
+  $("landing")?.classList.add("hidden");
+  $("onboarding")?.classList.add("hidden");
+  $("generationScreen")?.classList.add("hidden");
+  $("appShell")?.classList.remove("hidden");
+  setApiStatus(saved.aiPlan ? "已恢复上次生成结果" : "已恢复上次填写画像，可重新生成方案", "live");
+  return true;
+};
+
+const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 const fallbackNicheRule = {
   userNeed: "目标用户需要更具体、更低门槛、更可复制的内容，而不是泛泛建议",
@@ -154,6 +217,40 @@ const getFallbackTopicPool = (data) => {
 const setCreatorProfile = (profile) => {
   creatorProfile = { ...creatorProfile, ...profile };
   renderProfileSummary();
+};
+
+const postJsonWithRetry = async (url, payload, options = {}) => {
+  const attempts = options.attempts || 2;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        const message = error?.message || error?.error || `请求失败（HTTP ${response.status}）`;
+        const apiError = new Error(message);
+        apiError.status = response.status;
+        throw apiError;
+      }
+
+      return response.json();
+    } catch (error) {
+      lastError = error;
+      const shouldRetry = attempt < attempts && (!error.status || error.status >= 500);
+      if (!shouldRetry) break;
+      setApiStatus("首次请求未完成，正在自动重试一次...", "live");
+      $("waitNote").textContent = "服务正在唤醒，已自动重试，请继续等待。";
+      await delay(900);
+    }
+  }
+
+  throw lastError;
 };
 
 const renderProfileSummary = () => {
@@ -387,6 +484,7 @@ const renderTopics = (data) => {
       selectedTopicIndex = Number(card.dataset.topicIndex);
       contentPlan = null;
       renderAll(false);
+      persistWorkspace();
       switchTab("content");
     });
   });
@@ -581,15 +679,135 @@ const bindContentControls = () => {
     selectedTopicIndex = Number(event.target.value);
     contentPlan = null;
     renderContent(getFormData());
+    persistWorkspace();
   });
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll(".mode-button").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
       contentMode = button.dataset.contentMode;
+      persistWorkspace();
     });
   });
   $("generateContent")?.addEventListener("click", generateSelectedContent);
+};
+
+const escapeHtml = (value) => String(value || "")
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;");
+
+const sectionHtml = (title, selector) => {
+  const html = document.querySelector(selector)?.innerHTML || "";
+  return `
+    <section class="print-section">
+      <h2>${title}</h2>
+      <div>${html}</div>
+    </section>
+  `;
+};
+
+const exportPlanToPdf = () => {
+  renderAll(false);
+  const data = getFormData();
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    setApiStatus("浏览器拦截了导出窗口，请允许弹窗后再试。", "error");
+    return;
+  }
+
+  printWindow.document.write(`
+    <!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="UTF-8" />
+        <title>${escapeHtml(data.niche)} KOC 起号方案</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 32px;
+            color: #161914;
+            background: #f7f7f4;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+          }
+          .print-cover,
+          .print-section {
+            margin: 0 auto 18px;
+            max-width: 920px;
+            padding: 24px;
+            border: 1px solid #e2e3dd;
+            border-radius: 12px;
+            background: #fff;
+          }
+          h1, h2, h3, h4, p { margin-top: 0; }
+          h1 { font-size: 34px; line-height: 1.15; }
+          h2 { font-size: 22px; border-bottom: 1px solid #e2e3dd; padding-bottom: 10px; }
+          h3, h4 { font-size: 17px; }
+          p, li, span { line-height: 1.75; }
+          .print-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+          }
+          .print-meta div,
+          .insight-card,
+          .research-item,
+          .topic-card,
+          .brief-card,
+          .output-card,
+          .publish-step {
+            page-break-inside: avoid;
+            margin-bottom: 12px;
+            padding: 14px;
+            border: 1px solid #e2e3dd;
+            border-radius: 10px;
+            background: #fbfcf8;
+          }
+          .tag, .path-stage {
+            display: inline-block;
+            margin: 0 6px 6px 0;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #e8eee7;
+            font-size: 12px;
+            font-weight: 700;
+          }
+          button, select, .content-generate-button, .mode-row, .topic-select-label {
+            display: none !important;
+          }
+          .tab-page, .content-columns, .output-stack, .topic-list, .research-strip {
+            display: block !important;
+          }
+          @media print {
+            body { background: #fff; padding: 0; }
+            .print-cover, .print-section { border-radius: 0; box-shadow: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <section class="print-cover">
+          <p>AI Content Growth</p>
+          <h1>${escapeHtml(data.niche)} KOC 起号方案</h1>
+          <p>基于你的创作者画像、目标平台和当前卡点生成，可用于 Demo 评审、复盘或后续继续修改。</p>
+          <div class="print-meta">
+            <div><b>创作者</b><br>${escapeHtml(data.profile)}</div>
+            <div><b>目标用户</b><br>${escapeHtml(data.audience)}</div>
+            <div><b>主平台</b><br>${escapeHtml(data.platform)}</div>
+            <div><b>账号阶段</b><br>${escapeHtml(data.stage)}</div>
+          </div>
+        </section>
+        ${sectionHtml("01 账号定位", "#positioning")}
+        ${sectionHtml("02 起号路径", "#topics")}
+        ${sectionHtml("03 内容生成", "#content")}
+        ${sectionHtml("04 发布优化", "#publish")}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  window.setTimeout(() => printWindow.print(), 350);
 };
 
 const renderPublish = (data) => {
@@ -800,25 +1018,15 @@ const generateWithApi = async (resetTopic = true) => {
     if (isFileMode()) {
       throw new Error("当前是 file:// 静态预览，真实 API 需要打开 http://localhost:5175/");
     }
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => null);
-      const message = error?.message || error?.error || `API 请求失败（HTTP ${response.status}）`;
-      throw new Error(message);
-    }
-
-    aiPlan = await response.json();
+    aiPlan = await postJsonWithRetry("/api/generate", data);
     contentPlan = null;
     renderAll(resetTopic);
+    persistWorkspace();
     setApiStatus("已生成真实方案", "live");
   } catch (error) {
     aiPlan = null;
     renderAll(resetTopic);
+    persistWorkspace();
     setApiStatus(`API 未连接，已回退静态演示：${error.message}`, "error");
   } finally {
     stopLoadingMotion();
@@ -836,26 +1044,15 @@ const generateSelectedContent = async () => {
   setApiStatus("正在生成完整内容，预计需要 1-2 分钟...", "live");
 
   try {
-    const response = await fetch("/api/content", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...data,
-        contentMode,
-        topic
-      })
+    contentPlan = await postJsonWithRetry("/api/content", {
+      ...data,
+      contentMode,
+      topic
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => null);
-      const message = error?.message || error?.error || `内容生成失败（HTTP ${response.status}）`;
-      throw new Error(message);
-    }
-
-    contentPlan = await response.json();
     isContentGenerating = false;
     renderContent(data);
     renderPublish(data);
+    persistWorkspace();
     setApiStatus("已生成当前选题的完整内容", "live");
   } catch (error) {
     isContentGenerating = false;
@@ -894,6 +1091,8 @@ $("regeneratePlan").addEventListener("click", () => {
   generateWithApi(true);
   switchTab("positioning");
 });
+
+$("exportPlan")?.addEventListener("click", exportPlanToPdf);
 
 $("shuffleTopics").addEventListener("click", async () => {
   contentPlan = null;
@@ -985,13 +1184,17 @@ $("nextStep").addEventListener("click", () => {
     timeBudget: $("wizardTimeBudget").value,
     pain: `${finalBottleneck}。我的优势是${finalEdge}，已有素材包括：${$("wizardAssets").value}。`
   });
+  persistWorkspace();
   $("landing")?.classList.add("hidden");
   $("onboarding").classList.add("hidden");
   generateWithApi(true);
 });
 
-setWizardProgress();
-renderProfileSummary();
+if (!restoreWorkspace()) {
+  syncWizardFromProfile();
+  setWizardProgress();
+  renderProfileSummary();
+}
 
 window.addEventListener("error", (event) => {
   showRecoverableError(event.error || new Error(event.message));

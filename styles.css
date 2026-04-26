@@ -717,6 +717,12 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.wide-button {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+}
+
 .workspace {
   display: grid;
   grid-template-rows: auto auto 1fr;
