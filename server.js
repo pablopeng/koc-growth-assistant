@@ -12,7 +12,7 @@ loadEnv(path.join(root, ".env"));
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || "0.0.0.0";
 const model = process.env.KIMI_MODEL || "kimi-k2.6";
-const kimiBaseUrl = process.env.KIMI_BASE_URL || "https://api.moonshot.ai/v1";
+const kimiBaseUrl = process.env.KIMI_BASE_URL || "https://api.moonshot.cn/v1";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -171,7 +171,7 @@ async function callKimi(messages) {
     throw new Error("Missing KIMI_API_KEY. Create .env.local from .env.example and restart the server.");
   }
 
-  const response = await fetch(`${kimiBaseUrl.replace(/\/$/, "")}/chat/completions`, {
+  const request = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -184,7 +184,15 @@ async function callKimi(messages) {
       thinking: { type: "disabled" },
       messages
     })
-  });
+  };
+
+  let response;
+  try {
+    response = await fetch(`${kimiBaseUrl.replace(/\/$/, "")}/chat/completions`, request);
+  } catch (error) {
+    console.warn(`Kimi request failed once, retrying: ${error.message}`);
+    response = await fetch(`${kimiBaseUrl.replace(/\/$/, "")}/chat/completions`, request);
+  }
 
   if (!response.ok) {
     const text = await response.text();
