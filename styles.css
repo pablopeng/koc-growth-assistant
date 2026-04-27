@@ -519,16 +519,11 @@ button {
   border-radius: 6px;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
+.brand-logo {
   width: 52px;
   height: 52px;
-  color: #fff;
-  background: var(--green);
   border-radius: 6px;
-  font-size: 28px;
-  font-weight: 800;
+  box-shadow: 0 10px 22px rgba(23, 79, 61, 0.18);
 }
 
 .eyebrow {

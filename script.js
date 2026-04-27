@@ -124,7 +124,6 @@ let contentPlan = null;
 let contentMode = "图文 + 视频";
 let isContentGenerating = false;
 let creatorProfile = { ...sample };
-const STORAGE_KEY = "koc-growth-workspace-v1";
 const wizardState = {
   niche: "职场成长",
   stage: "准备起号，还没正式发布",
@@ -136,31 +135,11 @@ const $ = (id) => document.getElementById(id);
 
 const getFormData = () => ({ ...creatorProfile });
 const isFileMode = () => window.location.protocol === "file:";
-
-const safeJsonParse = (value) => {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-};
-
-const persistWorkspace = () => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      savedAt: new Date().toISOString(),
-      creatorProfile,
-      wizardState,
-      aiPlan,
-      contentPlan,
-      selectedTopicIndex,
-      topicPoolIndex,
-      contentMode
-    }));
-  } catch {
-    // Local storage can fail in private mode; the product should still work.
-  }
-};
+try {
+  localStorage.removeItem("koc-growth-workspace-v1");
+} catch {
+  // Ignore storage access failures.
+}
 
 const syncWizardFromProfile = () => {
   const data = getFormData();
@@ -175,26 +154,6 @@ const syncWizardFromProfile = () => {
   if ($("wizardAssets")) $("wizardAssets").value = data.assets || "";
   if ($("wizardPlatform")) $("wizardPlatform").value = data.platform || "小红书";
   if ($("wizardTimeBudget")) $("wizardTimeBudget").value = data.timeBudget || "3-5 小时";
-};
-
-const restoreWorkspace = () => {
-  const saved = safeJsonParse(localStorage.getItem(STORAGE_KEY));
-  if (!saved?.creatorProfile) return false;
-  creatorProfile = { ...sample, ...saved.creatorProfile };
-  Object.assign(wizardState, saved.wizardState || {});
-  aiPlan = saved.aiPlan || null;
-  contentPlan = saved.contentPlan || null;
-  selectedTopicIndex = Number(saved.selectedTopicIndex || 0);
-  topicPoolIndex = Number(saved.topicPoolIndex || 0);
-  contentMode = saved.contentMode || "图文 + 视频";
-  syncWizardFromProfile();
-  renderAll(false);
-  $("landing")?.classList.add("hidden");
-  $("onboarding")?.classList.add("hidden");
-  $("generationScreen")?.classList.add("hidden");
-  $("appShell")?.classList.remove("hidden");
-  setApiStatus(saved.aiPlan ? "已恢复上次生成结果" : "已恢复上次填写画像，可重新生成方案", "live");
-  return true;
 };
 
 const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -484,7 +443,6 @@ const renderTopics = (data) => {
       selectedTopicIndex = Number(card.dataset.topicIndex);
       contentPlan = null;
       renderAll(false);
-      persistWorkspace();
       switchTab("content");
     });
   });
@@ -679,14 +637,12 @@ const bindContentControls = () => {
     selectedTopicIndex = Number(event.target.value);
     contentPlan = null;
     renderContent(getFormData());
-    persistWorkspace();
   });
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll(".mode-button").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
       contentMode = button.dataset.contentMode;
-      persistWorkspace();
     });
   });
   $("generateContent")?.addEventListener("click", generateSelectedContent);
@@ -1016,17 +972,15 @@ const generateWithApi = async (resetTopic = true) => {
 
   try {
     if (isFileMode()) {
-      throw new Error("当前是 file:// 静态预览，真实 API 需要打开 http://localhost:5175/");
+      throw new Error("当前是 file:// 静态预览，真实 API 需要打开 http://localhost:5173/ 或线上部署地址。");
     }
     aiPlan = await postJsonWithRetry("/api/generate", data);
     contentPlan = null;
     renderAll(resetTopic);
-    persistWorkspace();
     setApiStatus("已生成真实方案", "live");
   } catch (error) {
     aiPlan = null;
     renderAll(resetTopic);
-    persistWorkspace();
     setApiStatus(`API 未连接，已回退静态演示：${error.message}`, "error");
   } finally {
     stopLoadingMotion();
@@ -1052,7 +1006,6 @@ const generateSelectedContent = async () => {
     isContentGenerating = false;
     renderContent(data);
     renderPublish(data);
-    persistWorkspace();
     setApiStatus("已生成当前选题的完整内容", "live");
   } catch (error) {
     isContentGenerating = false;
@@ -1184,17 +1137,14 @@ $("nextStep").addEventListener("click", () => {
     timeBudget: $("wizardTimeBudget").value,
     pain: `${finalBottleneck}。我的优势是${finalEdge}，已有素材包括：${$("wizardAssets").value}。`
   });
-  persistWorkspace();
   $("landing")?.classList.add("hidden");
   $("onboarding").classList.add("hidden");
   generateWithApi(true);
 });
 
-if (!restoreWorkspace()) {
-  syncWizardFromProfile();
-  setWizardProgress();
-  renderProfileSummary();
-}
+syncWizardFromProfile();
+setWizardProgress();
+renderProfileSummary();
 
 window.addEventListener("error", (event) => {
   showRecoverableError(event.error || new Error(event.message));

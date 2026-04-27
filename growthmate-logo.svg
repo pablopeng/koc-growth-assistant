@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GrowthMate logo</title>
+  <desc id="desc">A green rounded square logo with a growth path and the letter G.</desc>
+  <rect width="128" height="128" rx="28" fill="#174F3D"/>
+  <path d="M37 76C37 55.565 52.825 40 73.08 40C84.06 40 92.566 44.326 98.147 50.716L87.886 60.349C84.42 56.422 79.76 54.071 73.53 54.071C61.736 54.071 52.69 63.164 52.69 75.91C52.69 89.014 61.824 98.018 74.791 98.018C80.212 98.018 84.517 96.859 87.977 94.685V84.792H72.364V71.52H102.333V102.433C95.964 108.056 86.743 112 74.16 112C52.561 112 37 96.345 37 76Z" fill="#F8F4E8"/>
+  <path d="M72 33C78.4 22.6 88.6 18.4 101 20.7C94.2 23.9 90 29.2 88.4 36.7C85 33.9 79.5 32.4 72 33Z" fill="#C69A34"/>
+  <path d="M88 35C75.7 37.3 66.7 43.5 61 53.7" stroke="#C69A34" stroke-width="7" stroke-linecap="round"/>
+</svg>
