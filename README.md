@@ -39,11 +39,15 @@ npm start
 ```text
 KIMI_API_KEY=你的 Kimi API Key
 KIMI_MODEL=kimi-k2.6
-KIMI_BASE_URL=https://api.moonshot.ai/v1
+KIMI_BASE_URL=https://api.moonshot.cn/v1
 HOST=0.0.0.0
+RATE_LIMIT_MAX=12
+RATE_LIMIT_WINDOW_MS=60000
 ```
 
 `PORT` 通常由部署平台自动注入，不需要手动填写。
+
+`/api/history` 默认不开放。如果确实需要查看最近生成记录，额外设置 `HISTORY_TOKEN`，并用 `Authorization: Bearer <HISTORY_TOKEN>` 访问。不要在公开页面暴露这个 token。
 
 ## 健康检查
 
@@ -54,3 +58,7 @@ HOST=0.0.0.0
 ```
 
 如果返回 `ok: true` 且 `kimiConfigured: true`，说明服务和 Kimi Key 已配置成功。
+
+## 安全说明
+
+服务只暴露前端页面、样式、脚本和 `assets/` 静态资源；`.env`、`data/`、`package.json` 等项目文件不会被浏览器直接读取。生成历史会写入本地 `data/generations.jsonl`，该目录已加入 `.gitignore`，上线时也建议定期清理或改接数据库。

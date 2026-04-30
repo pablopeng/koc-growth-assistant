@@ -13,12 +13,17 @@ const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || "0.0.0.0";
 const model = process.env.KIMI_MODEL || "kimi-k2.6";
 const kimiBaseUrl = process.env.KIMI_BASE_URL || "https://api.moonshot.cn/v1";
+const historyToken = process.env.HISTORY_TOKEN || "";
+const rateLimitWindowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
+const rateLimitMax = Number(process.env.RATE_LIMIT_MAX || 12);
+const rateLimitStore = new Map();
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8"
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml; charset=utf-8"
 };
 
 const server = http.createServer(async (req, res) => {
@@ -26,6 +31,7 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
     if (req.method === "POST" && url.pathname === "/api/generate") {
+      if (!checkRateLimit(req, res)) return;
       const payload = await readJson(req);
       const result = await generatePlan(payload);
       saveGeneration(payload, result);
@@ -34,6 +40,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/api/content") {
+      if (!checkRateLimit(req, res)) return;
       const payload = await readJson(req);
       const result = await generateContent(payload);
       sendJson(res, 200, result);
@@ -41,6 +48,10 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/api/history") {
+      if (!historyToken || req.headers.authorization !== `Bearer ${historyToken}`) {
+        sendJson(res, 404, { error: "Not found" });
+        return;
+      }
       sendJson(res, 200, readHistory());
       return;
     }
@@ -90,9 +101,18 @@ function loadEnv(filePath) {
 
 function serveStatic(requestPath, res) {
   const normalized = requestPath === "/" ? "/index.html" : requestPath;
-  const filePath = path.normalize(path.join(root, normalized));
+  const decodedPath = decodeURIComponent(normalized);
+  const relativePath = decodedPath.replace(/^\/+/, "");
+  const filePath = path.resolve(root, relativePath);
+  const relativeToRoot = path.relative(root, filePath);
+  const allowedFiles = new Set(["index.html", "styles.css", "script.js"]);
+  const isAllowedAsset = relativeToRoot.startsWith(`assets${path.sep}`);
 
-  if (!filePath.startsWith(root)) {
+  if (
+    relativeToRoot.startsWith("..") ||
+    path.isAbsolute(relativeToRoot) ||
+    (!allowedFiles.has(relativeToRoot) && !isAllowedAsset)
+  ) {
     sendText(res, 403, "Forbidden");
     return;
   }
@@ -127,6 +147,25 @@ function readJson(req) {
     });
     req.on("error", reject);
   });
+}
+
+function checkRateLimit(req, res) {
+  const now = Date.now();
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+  const current = rateLimitStore.get(ip);
+
+  if (!current || now - current.startedAt > rateLimitWindowMs) {
+    rateLimitStore.set(ip, { startedAt: now, count: 1 });
+    return true;
+  }
+
+  current.count += 1;
+  if (current.count > rateLimitMax) {
+    sendJson(res, 429, { error: "Too many requests", message: "请求过于频繁，请稍后再试。" });
+    return false;
+  }
+
+  return true;
 }
 
 async function generatePlan(data) {

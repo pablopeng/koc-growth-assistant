@@ -68,13 +68,17 @@ apt install -y git
 cat > .env <<'EOF'
 KIMI_API_KEY=你的KimiKey
 KIMI_MODEL=kimi-k2.6
-KIMI_BASE_URL=https://api.moonshot.ai/v1
+KIMI_BASE_URL=https://api.moonshot.cn/v1
 HOST=0.0.0.0
 PORT=8080
+RATE_LIMIT_MAX=12
+RATE_LIMIT_WINDOW_MS=60000
 EOF
 ```
 
 不要把 `.env` 上传到 GitHub。
+
+`/api/history` 默认关闭。只有你需要临时查看最近生成记录时，才在 `.env` 里加 `HISTORY_TOKEN=一段足够随机的管理密码`，访问时带上 `Authorization: Bearer <HISTORY_TOKEN>`。
 
 ## 7. 构建并启动
 

@@ -133,7 +133,26 @@ const wizardState = {
 
 const $ = (id) => document.getElementById(id);
 
+const escapeHtml = (value) => String(value || "")
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;")
+  .replaceAll("'", "&#39;");
+
+const sanitizeForHtml = (value) => {
+  if (Array.isArray(value)) return value.map(sanitizeForHtml);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, sanitizeForHtml(item)])
+    );
+  }
+  if (typeof value === "string") return escapeHtml(value);
+  return value;
+};
+
 const getFormData = () => ({ ...creatorProfile });
+const getSafeFormData = () => sanitizeForHtml(getFormData());
 const isFileMode = () => window.location.protocol === "file:";
 try {
   localStorage.removeItem("koc-growth-workspace-v1");
@@ -213,7 +232,7 @@ const postJsonWithRetry = async (url, payload, options = {}) => {
 };
 
 const renderProfileSummary = () => {
-  const data = getFormData();
+  const data = getSafeFormData();
   const el = $("profileSummary");
   if (!el) return;
   el.innerHTML = `
@@ -636,7 +655,7 @@ const bindContentControls = () => {
   $("contentTopicSelect")?.addEventListener("change", (event) => {
     selectedTopicIndex = Number(event.target.value);
     contentPlan = null;
-    renderContent(getFormData());
+    renderContent(getSafeFormData());
   });
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -647,12 +666,6 @@ const bindContentControls = () => {
   });
   $("generateContent")?.addEventListener("click", generateSelectedContent);
 };
-
-const escapeHtml = (value) => String(value || "")
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;");
 
 const sectionHtml = (title, selector) => {
   const html = document.querySelector(selector)?.innerHTML || "";
@@ -859,7 +872,7 @@ const renderPublish = (data) => {
 
 const renderAll = (resetTopic = true) => {
   if (resetTopic) selectedTopicIndex = 0;
-  const data = getFormData();
+  const data = getSafeFormData();
   renderResearch(data);
   renderPositioning(data);
   renderTopics(data);
@@ -884,7 +897,7 @@ const showRecoverableError = (error) => {
     target.innerHTML = `
       <div class="insight-card">
         <h4>生成失败，但页面已恢复</h4>
-        <p class="muted">${error.message}</p>
+        <p class="muted">${escapeHtml(error.message)}</p>
       </div>
     `;
   }
@@ -974,7 +987,7 @@ const generateWithApi = async (resetTopic = true) => {
     if (isFileMode()) {
       throw new Error("当前是 file:// 静态预览，真实 API 需要打开 http://localhost:5173/ 或线上部署地址。");
     }
-    aiPlan = await postJsonWithRetry("/api/generate", data);
+    aiPlan = sanitizeForHtml(await postJsonWithRetry("/api/generate", data));
     contentPlan = null;
     renderAll(resetTopic);
     setApiStatus("已生成真实方案", "live");
@@ -991,25 +1004,26 @@ const generateWithApi = async (resetTopic = true) => {
 
 const generateSelectedContent = async () => {
   const data = getFormData();
+  const renderData = getSafeFormData();
   const topic = getSelectedTopic(data);
   const button = $("generateContent");
   isContentGenerating = true;
-  renderContent(data);
+  renderContent(renderData);
   setApiStatus("正在生成完整内容，预计需要 1-2 分钟...", "live");
 
   try {
-    contentPlan = await postJsonWithRetry("/api/content", {
+    contentPlan = sanitizeForHtml(await postJsonWithRetry("/api/content", {
       ...data,
       contentMode,
       topic
-    });
+    }));
     isContentGenerating = false;
-    renderContent(data);
-    renderPublish(data);
+    renderContent(renderData);
+    renderPublish(renderData);
     setApiStatus("已生成当前选题的完整内容", "live");
   } catch (error) {
     isContentGenerating = false;
-    renderContent(data);
+    renderContent(renderData);
     setApiStatus(`内容生成失败：${error.message}`, "error");
   } finally {
     isContentGenerating = false;
