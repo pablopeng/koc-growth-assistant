@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package.json ./
 COPY index.html styles.css script.js server.js ./
-COPY assets ./assets
+
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
