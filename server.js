@@ -38,9 +38,11 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/generate") {
       if (!checkRateLimit(req, res)) return;
+      const startedAt = Date.now();
       const payload = await readJson(req);
       const result = await generatePlan(payload);
       saveGeneration(payload, result);
+      console.log(`[generate] completed in ${Date.now() - startedAt}ms`);
       sendJson(res, 200, result);
       return;
     }
@@ -231,26 +233,21 @@ function checkRateLimit(req, res) {
 }
 
 async function generatePlan(data) {
-  try {
-    return await callKimi([
-      {
-        role: "system",
-        content: [
-          "你是资深 KOC 内容增长产品经理。",
-          "只输出严格 JSON，不要 markdown。",
-          "建议必须基于用户画像、阶段、素材、痛点，具体可执行。",
-          "不要声称真实抓取平台数据，只能做平台经验推断。"
-        ].join("\n")
-      },
-      {
-        role: "user",
-        content: buildPrompt(data)
-      }
-    ], { maxTokens: 2200, timeoutMs: 55_000 }).then((content) => normalizePlan(parseModelJson(content), data));
-  } catch (error) {
-    if (!String(error.message || "").includes("timeout")) throw error;
-    return buildFastPlan(data);
-  }
+  return callKimi([
+    {
+      role: "system",
+      content: [
+        "你是资深 KOC 内容增长产品经理。",
+        "只输出严格 JSON，不要 markdown。",
+        "建议必须基于用户画像、阶段、素材、痛点，具体可执行。",
+        "不要声称真实抓取平台数据，只能做平台经验推断。"
+      ].join("\n")
+    },
+    {
+      role: "user",
+      content: buildPrompt(data)
+    }
+  ]).then((content) => normalizePlan(parseModelJson(content), data));
 }
 
 async function generateContent(data) {
@@ -315,6 +312,7 @@ async function callKimi(messages, options = {}) {
   };
 
   let response;
+  const startedAt = Date.now();
   try {
     response = await fetch(`${kimiBaseUrl.replace(/\/$/, "")}/chat/completions`, request);
   } catch (error) {
@@ -326,6 +324,7 @@ async function callKimi(messages, options = {}) {
   } finally {
     clearTimeout(timeout);
   }
+  console.log(`[kimi] ${model} responded ${response.status} in ${Date.now() - startedAt}ms`);
 
   if (!response.ok) {
     const text = await response.text();
@@ -342,7 +341,7 @@ async function callKimi(messages, options = {}) {
 function buildPrompt(data) {
   const platformGuide = getPlatformGuide(data.platform);
   return `
-请基于下面画像生成“首屏快速版”KOC 起号方案。目标是 60 秒内返回可演示结果；完整正文会在内容生成页单独生成。
+请基于下面的 KOC 画像生成一个起号方案：
 
 个人背景：${data.profile || "未填写"}
 目标人群：${data.audience || "未填写"}
@@ -364,14 +363,14 @@ function buildPrompt(data) {
 ${platformGuide.plan}
 平台选题类型必须贴合：${platformGuide.topicTypes}
 
-硬性要求：
+生成要求：
 1. 只输出严格 JSON，不要 markdown。
-2. 语句短，禁止长段落。除数组外，每个字符串尽量 15-45 个汉字；diagnosis/playbook 可 60-90 字。
+2. 不要只根据赛道给通用建议。每个定位、选题和发布建议都必须绑定至少一条用户输入，例如个人背景、用户时刻、素材、经历、内容边界。
 3. 必须绑定用户输入里的背景、目标人群、用户时刻、已有素材或变现目标，不能泛泛讲赛道。
 4. 冷启动观察指标只能写低样本信号，例如“是否有人追问模板”“收藏/点赞相对变化”，不要写绝对高 KPI。
 5. research 只能写“基于平台公开内容观察/用户素材推断”，不能伪装真实抓取数据。
-6. topics 必须 7 个；前 2 条建立信任，中间 3 条验证方向，最后 2 条轻转化/系列化。
-7. 不要输出 tasks，后端会根据 topics 自动生成每日任务，避免首屏超时。
+6. topics 和 tasks 都必须 7 个；前 2 条建立信任，中间 3 条验证方向，最后 2 条轻转化/系列化。
+7. tasks 必须和 topics 一一对应，但表达成用户每天要完成的增长任务。每个任务都要有发布后观察指标、下一步判断信号和 commentPlan。
 
 请输出 JSON，结构必须是：
 {
@@ -418,6 +417,24 @@ ${platformGuide.plan}
       "interaction": "收藏/评论/私信/转发"
     }
   ],
+  "tasks": [
+    {
+      "day": 1,
+      "goal": "建立信任/验证方向/轻转化",
+      "title": "任务对应选题标题",
+      "category": "任务类别",
+      "contentType": "内容形式",
+      "whyThisTask": "为什么今天应该做这条任务",
+      "material": "可以直接使用的素材",
+      "publishMetric": "发布后重点观察的数据",
+      "nextSignal": "看到什么反馈后下一条怎么走",
+      "commentPlan": {
+        "expectedComments": ["可能评论1", "可能评论2", "可能评论3"],
+        "pinnedReply": "建议置顶回复或结尾提问"
+      },
+      "interaction": "收藏/评论/私信/转发"
+    }
+  ],
   "publish": {
     "titles": ["标题A", "标题B", "标题C"],
     "suggestions": ["发布建议1", "发布建议2", "发布建议3"],
@@ -427,93 +444,6 @@ ${platformGuide.plan}
 }`;
 }
 
-function buildFastPlan(data) {
-  const platformGuide = getPlatformGuide(data.platform);
-  const audienceMoment = data.audienceMoment || data.pain || "用户最需要帮助的具体时刻";
-  const audience = data.audience || "目标用户";
-  const assets = data.assets || data.story || "已有经历、截图或复盘记录";
-  const niche = data.niche || "内容";
-  const platform = data.platform || "小红书";
-  const baseTopics = [
-    ["建立信任", `我为什么开始记录${audienceMoment}`, "真实经历"],
-    ["建立信任", `${audience}最容易踩的3个坑`, "避坑笔记"],
-    ["验证方向", `用${assets}做一次真实复盘`, "真实记录"],
-    ["验证方向", `${audienceMoment}时我会先看这张清单`, "清单模板"],
-    ["验证方向", `同样是${niche}内容，为什么这条更适合你`, "测评对比"],
-    ["轻转化", `把这周最高频问题整理成模板`, "清单模板"],
-    ["轻转化", `下一周继续更新的${platform}系列`, "系列栏目"]
-  ];
-  const topics = baseTopics.map(([stage, title, category], index) => ({
-    title,
-    category,
-    stage,
-    intent: index < 2 ? "先建立可信人设" : index < 5 ? "验证用户真实需求" : "沉淀系列心智",
-    whyNow: index < 2 ? "冷启动先证明你有真实经历" : index < 5 ? "用不同内容形态测试反馈" : "把有效方向做成可追更资产",
-    contentType: platformGuide.topicTypes.split("/")[0] || data.format || "图文笔记",
-    reason: `绑定${audienceMoment}和${assets}，避免泛泛讲${niche}`,
-    material: assets,
-    interaction: index < 5 ? "收藏/评论" : "评论/私信"
-  }));
-  return normalizePlan({
-    agentTrace: [
-      {
-        step: "诊断",
-        thought: `Agent 已进入快速规划模式，先用用户画像生成可执行路径。`,
-        action: "先给出稳定起号方案，完整内容可在下一步继续生成。"
-      },
-      {
-        step: "规划",
-        thought: `围绕${audienceMoment}，用${assets}做7天低成本验证。`,
-        action: "生成一周增长任务，完整内容仍可单独调用大模型。"
-      }
-    ],
-    diagnosis: {
-      stageAssessment: data.stage || "有素材但方向需要验证的冷启动期",
-      mainBlocker: data.bottleneck || "定位和选题还没有绑定到用户最需要的时刻",
-      usableAssets: [assets, data.profile || "个人经历", data.goal || "商业目标"].filter(Boolean).slice(0, 3),
-      strategy: `先用${assets}建立信任，再测试${audienceMoment}下的收藏和评论信号。`,
-      avoid: ["不要做泛泛赛道科普", "不要一上来硬转化"],
-      nextPriority: "先跑完7天任务，找到评论区最高频需求。"
-    },
-    research: [
-      {
-        title: "趋势观察",
-        source: "用户素材推断",
-        body: `${audienceMoment}是更适合搜索和收藏的强场景。`
-      },
-      {
-        title: "相似打法",
-        source: "平台公开内容观察",
-        body: `${platform}冷启动更适合用真实截图、清单和复盘建立信任。`
-      },
-      {
-        title: "平台提醒",
-        source: "平台公开内容观察",
-        body: "首周重点看评论追问和收藏比例，不看绝对涨粉。"
-      }
-    ],
-    positioning: {
-      headline: `${audienceMoment}时能被想起的${niche}记录者`,
-      diagnosis: `用户不是缺少内容方向，而是缺少一个能被目标用户记住的具体时刻。把${audienceMoment}和${assets}绑定后，账号会比泛泛讲${niche}更可信，也更容易产生评论追问。`,
-      tags: [niche, audience, "真实记录", "低成本验证"].filter(Boolean).slice(0, 4),
-      metrics: [
-        { value: "4", label: "内容支柱" },
-        { value: "7", label: "天选题计划" },
-        { value: data.timeBudget || "3-5小时", label: "适配投入" }
-      ],
-      userNeed: `${audience}需要在${audienceMoment}时获得具体、可信、可照做的建议。`,
-      pillars: ["真实经历", "避坑清单", "素材复盘", "系列模板"],
-      playbook: `前两周先做${platform}轻量内容，不追求大制作。每天围绕一个具体痛点发布，用评论追问决定下一条，把有效格式沉淀成系列。`
-    },
-    topics,
-    publish: {
-      titles: topics.slice(0, 3).map((topic) => topic.title),
-      suggestions: ["首图突出具体痛点和真实素材", "结尾只问一个容易回答的问题", "前7天先看反馈再扩写正文"],
-      interactions: ["置顶回复收集下一条需求", "把求模板评论沉淀成系列", "优先回复同类追问"],
-      series: ["真实记录系列", "避坑清单系列", "评论区答疑系列"]
-    }
-  }, data);
-}
 
 function buildContentPrompt(data) {
   const topic = data.topic || {};
