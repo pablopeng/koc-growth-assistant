@@ -6,6 +6,9 @@ const sample = {
   stage: "准备起号，还没正式发布",
   bottleneck: "不知道自己该做什么定位",
   assets: "一些真实工作经历、工具使用截图、复盘笔记",
+  story: "刚入职后如何拆任务、写复盘、用工具提效",
+  audienceMoment: "刚遇到具体问题，不知道第一步怎么做",
+  contentBoundary: "不装专家，只讲真实过程和可复制动作",
   platform: "小红书",
   format: "图文 + 短视频",
   goal: "接效率工具/课程类商单",
@@ -121,14 +124,22 @@ let selectedTopicIndex = 0;
 let wizardStep = 0;
 let aiPlan = null;
 let contentPlan = null;
+let reviewPlan = null;
 let contentMode = "图文 + 视频";
 let isContentGenerating = false;
+let isReviewGenerating = false;
+let appMode = "idle";
+let generationRequestId = 0;
 let creatorProfile = { ...sample };
 const wizardState = {
   niche: "职场成长",
   stage: "准备起号，还没正式发布",
   edge: "真实经历",
-  bottleneck: "不知道自己该做什么定位"
+  bottleneck: "不知道自己该做什么定位",
+  platform: "小红书",
+  timeBudget: "3-5 小时",
+  audienceMoment: "刚遇到具体问题，不知道第一步怎么做",
+  contentBoundary: "不装专家，只讲真实过程和可复制动作"
 };
 
 const $ = (id) => document.getElementById(id);
@@ -166,13 +177,16 @@ const syncWizardFromProfile = () => {
     niche: data.niche || wizardState.niche,
     stage: data.stage || wizardState.stage,
     edge: data.edge || wizardState.edge,
-    bottleneck: data.bottleneck || wizardState.bottleneck
+    bottleneck: data.bottleneck || wizardState.bottleneck,
+    platform: data.platform || wizardState.platform,
+    timeBudget: data.timeBudget || wizardState.timeBudget,
+    audienceMoment: data.audienceMoment || wizardState.audienceMoment,
+    contentBoundary: data.contentBoundary || wizardState.contentBoundary
   });
   if ($("wizardProfile")) $("wizardProfile").value = data.profile || "";
   if ($("wizardAudience")) $("wizardAudience").value = data.audience || "";
   if ($("wizardAssets")) $("wizardAssets").value = data.assets || "";
-  if ($("wizardPlatform")) $("wizardPlatform").value = data.platform || "小红书";
-  if ($("wizardTimeBudget")) $("wizardTimeBudget").value = data.timeBudget || "3-5 小时";
+  if ($("wizardStory")) $("wizardStory").value = data.story || "";
 };
 
 const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -241,6 +255,8 @@ const renderProfileSummary = () => {
     <div class="summary-row"><span>账号阶段</span><b>${data.stage}</b></div>
     <div class="summary-row"><span>内容优势</span><b>${data.edge}</b></div>
     <div class="summary-row"><span>当前卡点</span><b>${data.bottleneck}</b></div>
+    <div class="summary-row"><span>观看理由</span><b>${data.audienceMoment || "未填写"}</b></div>
+    <div class="summary-row"><span>内容感觉</span><b>${data.contentBoundary || "未填写"}</b></div>
     <div class="summary-note">${data.profile}</div>
   `;
 };
@@ -360,31 +376,64 @@ const renderResearch = (data) => {
   `;
 };
 
+const renderAgentTrace = (data) => {
+  const trace = aiPlan?.agentTrace?.length
+    ? aiPlan.agentTrace
+    : [
+      {
+        step: "诊断",
+        thought: `基于“${data.stage}”和“${data.bottleneck}”判断当前阻塞点。`,
+        action: "先明确账号切口和第一周验证路径。"
+      },
+      {
+        step: "规划",
+        thought: "第一周先建立信任，再验证方向，最后轻转化。",
+        action: "把选题拆成每天可执行的增长任务。"
+      }
+    ];
+  const el = $("agentTraceResult");
+  if (!el) return;
+  el.innerHTML = trace
+    .map((item, index) => `
+      <article class="trace-step" data-step="${index + 1}">
+        <span>${item.step || `Step ${index + 1}`}</span>
+        <p>${item.action || item.thought || "进入下一步 Agent 工作流。"}</p>
+      </article>
+    `)
+    .join("");
+};
+
 const renderPositioning = (data) => {
   if (aiPlan?.positioning?.headline) {
     const plan = aiPlan.positioning;
+    const diagnosis = aiPlan.diagnosis || {};
     $("positioningResult").innerHTML = `
-      <div class="insight-card">
-        <div class="big-statement">${plan.headline}</div>
-        <p class="muted">${plan.diagnosis || ""}</p>
-        <div class="tag-row">
-          ${(plan.tags || []).map((tag) => `<span class="tag">${tag}</span>`).join("")}
+      <div class="insight-card diagnosis-card">
+        <div class="diagnosis-head">
+          <span class="section-kicker">Agent Diagnosis</span>
+          <h4>${plan.headline || "当前账号需要先收敛内容切口"}</h4>
+          <p>${diagnosis.strategy || plan.diagnosis || ""}</p>
+        </div>
+        <div class="diagnosis-grid">
+          <div><span>阶段判断</span><b>${diagnosis.stageAssessment || data.stage}</b></div>
+          <div><span>主要阻塞</span><b>${diagnosis.mainBlocker || data.bottleneck}</b></div>
+          <div><span>下一优先级</span><b>${diagnosis.nextPriority || "先完成第一周低成本验证。"}</b></div>
         </div>
       </div>
 
-      <div class="insight-card">
-        <h4>用户真实需求</h4>
-        <p class="muted">${plan.userNeed || ""}</p>
-      </div>
-
-      <div class="insight-card">
-        <h4>内容支柱</h4>
-        <ul>${(plan.pillars || []).map((item) => `<li>${item}</li>`).join("")}</ul>
-      </div>
-
-      <div class="insight-card">
-        <h4>打法建议</h4>
-        <p class="muted">${plan.playbook || ""}</p>
+      <div class="strategy-summary">
+        <article>
+          <span>可用素材</span>
+          <p>${(diagnosis.usableAssets || []).join(" / ") || data.assets || "真实经历、截图或复盘笔记"}</p>
+        </article>
+        <article>
+          <span>内容方向</span>
+          <p>${(plan.pillars || []).slice(0, 3).join(" / ") || plan.userNeed || "围绕一个具体问题连续验证"}</p>
+        </article>
+        <article>
+          <span>先别做</span>
+          <p>${(diagnosis.avoid || []).join(" / ") || "不要一开始做泛泛干货或硬转化"}</p>
+        </article>
       </div>
     `;
     return;
@@ -393,65 +442,53 @@ const renderPositioning = (data) => {
   const niche = getNicheRule(data.niche);
   const platform = getPlatformRule(data.platform);
   $("positioningResult").innerHTML = `
-    <div class="insight-card">
-      <div class="big-statement">定位建议：${data.edge}型 ${data.niche} KOC</div>
-      <p class="muted">基于你的背景“${data.profile || "暂无补充"}”，更建议把账号做成“普通人可复制的过程记录”，服务 ${data.audience || "目标用户"}。核心不是证明你多专业，而是让用户看到你如何把问题拆小、试错、复盘，并最终承接 ${data.goal}。</p>
-      <div class="tag-row">
-        <span class="tag">普通人可复制</span>
-        <span class="tag">${data.niche}</span>
-        <span class="tag">${data.edge}</span>
-        <span class="tag">系列内容</span>
-        <span class="tag">${data.platform}</span>
+    <div class="insight-card diagnosis-card">
+      <div class="diagnosis-head">
+        <span class="section-kicker">Agent Diagnosis</span>
+        <h4>${data.edge}型 ${data.niche} KOC，先做低成本验证</h4>
+        <p>你现在不是单纯缺文案，而是需要把“${data.niche}”收敛成一个更像你的内容切口，再用连续任务验证用户是否愿意互动和收藏。</p>
+      </div>
+      <div class="diagnosis-grid">
+        <div><span>阶段判断</span><b>${data.stage}</b></div>
+        <div><span>主要阻塞</span><b>${data.bottleneck}</b></div>
+        <div><span>下一优先级</span><b>先完成第一周低成本验证</b></div>
       </div>
     </div>
 
-    <div class="insight-card">
-      <h4>用户真实需求</h4>
-      <p class="muted">${niche.userNeed}。你的账号应该持续回答：为什么这个方法适合普通人、执行成本有多低、用了之后能看到什么变化。</p>
-    </div>
-
-    <div class="insight-card">
-      <h4>内容支柱</h4>
-      <ul>
-        ${niche.contentPillars.map((item) => `<li>${item}：围绕一个具体问题输出，不做泛泛建议。</li>`).join("")}
-      </ul>
-    </div>
-
-    <div class="insight-card">
-      <h4>打法建议</h4>
-      <p class="muted">${edgeRules[data.edge]} 第一阶段建议先做：${niche.firstTopic}。${platform.risk}</p>
+    <div class="strategy-summary">
+      <article>
+        <span>可用素材</span>
+        <p>${data.assets || data.story || "真实经历、截图或复盘笔记"}</p>
+      </article>
+      <article>
+        <span>内容方向</span>
+        <p>${niche.contentPillars.slice(0, 3).join(" / ")}</p>
+      </article>
+      <article>
+        <span>先别做</span>
+        <p>${platform.risk}</p>
+      </article>
     </div>
   `;
 };
 
 const renderTopics = (data) => {
-  const topics = aiPlan?.topics?.length
-    ? aiPlan.topics.map((topic) => [
-      topic.title,
-      topic.category,
-      topic.interaction,
-      topic.potential,
-      topic.difficulty,
-      topic.reason,
-      topic.stage,
-      topic.intent,
-      topic.whyNow,
-      topic.contentType
-    ])
-    : getFallbackTopicPool(data);
-  $("topicsResult").innerHTML = topics
-    .map((topic, index) => `
+  const tasks = getTaskOptions(data);
+  $("topicsResult").innerHTML = tasks
+    .map((task, index) => `
       <button class="topic-card ${index === selectedTopicIndex ? "selected" : ""}" type="button" data-topic-index="${index}" data-step="${index + 1}">
         <div class="tag-row">
-          <span class="path-stage">${topic[6] || fallbackStage(index)}</span>
-          <span class="tag">${topic[1]}</span>
-          <span class="tag">${topic[9] || data.platform}</span>
+          <span class="path-stage">Day ${task.day || index + 1}｜${task.goal || fallbackStage(index)}</span>
+          <span class="tag">${task.category || "增长任务"}</span>
+          <span class="tag">${task.contentType || data.platform}</span>
         </div>
-        <h4>${topic[0]}</h4>
-        <p class="muted">推荐理由：${topic[5] || `贴合 ${data.audience || "目标用户"} 的即时痛点，符合“${data.edge}”优势，适合引导用户${topic[2]}。`}</p>
+        <h4>${task.title}</h4>
+        <p class="muted">Agent 任务：${task.whyThisTask || task.reason || `贴合 ${data.audience || "目标用户"} 的即时痛点，符合“${data.edge}”优势。`}</p>
         <div class="path-details">
-          <div class="path-meta"><span class="path-label">这一条解决</span><span>${topic[7] || fallbackIntent(index)}</span></div>
-          <div class="path-meta"><span class="path-label">为什么现在发</span><span>${topic[8] || "用于建立账号记忆点，并为后续系列内容铺垫。"}</span></div>
+          <div class="path-meta"><span class="path-label">任务目标</span><span>${task.goal || fallbackStage(index)}：${task.intent || fallbackIntent(index)}</span></div>
+          <div class="path-meta"><span class="path-label">可用素材</span><span>${task.material || data.assets || "用一条真实经历或截图做证据。"}</span></div>
+          <div class="path-meta"><span class="path-label">观察指标</span><span>${task.publishMetric || "发布后重点看收藏、评论和关注转化。"}</span></div>
+          <div class="path-meta"><span class="path-label">下一步信号</span><span>${task.nextSignal || "根据评论区最高频问题延展下一条内容。"}</span></div>
         </div>
       </button>
     `)
@@ -461,10 +498,44 @@ const renderTopics = (data) => {
     card.addEventListener("click", () => {
       selectedTopicIndex = Number(card.dataset.topicIndex);
       contentPlan = null;
+      reviewPlan = null;
       renderAll(false);
       switchTab("content");
     });
   });
+};
+
+const getTaskOptions = (data) => {
+  if (aiPlan?.tasks?.length) {
+    return aiPlan.tasks.map((task, index) => {
+      const topic = aiPlan.topics?.[index] || {};
+      return {
+        ...topic,
+        ...task,
+        title: task.title || topic.title,
+        category: task.category || topic.category,
+        contentType: task.contentType || topic.contentType,
+        interaction: task.interaction || topic.interaction,
+        stage: task.goal || topic.stage,
+        whyNow: task.whyThisTask || topic.whyNow,
+        material: task.material || topic.material
+      };
+    });
+  }
+
+  return getFallbackTopicPool(data).map((topic, index) => ({
+    day: index + 1,
+    goal: fallbackStage(index),
+    title: topic[0],
+    category: topic[1],
+    contentType: data.format,
+    interaction: topic[2],
+    whyThisTask: `贴合 ${data.audience || "目标用户"} 的即时痛点，适合引导用户${topic[2]}。`,
+    intent: fallbackIntent(index),
+    material: data.assets || data.story || "用一条真实经历或截图做证据。",
+    publishMetric: index < 2 ? "重点看评论共鸣和关注转化。" : index < 5 ? "重点看收藏、评论问题和转发。" : "重点看私信、咨询和转化反馈。",
+    nextSignal: "根据评论区最高频问题延展下一条内容。"
+  }));
 };
 
 const fallbackStage = (index) => {
@@ -480,7 +551,23 @@ const fallbackIntent = (index) => {
 };
 
 const getSelectedTopic = (data) => {
+  const task = aiPlan?.tasks?.[selectedTopicIndex];
   const topic = aiPlan?.topics?.[selectedTopicIndex];
+  if (task || topic) {
+    return {
+      ...(topic || {}),
+      ...(task || {}),
+      title: task?.title || topic?.title,
+      category: task?.category || topic?.category,
+      stage: task?.goal || topic?.stage,
+      intent: topic?.intent || task?.goal,
+      whyNow: task?.whyThisTask || topic?.whyNow,
+      reason: task?.whyThisTask || topic?.reason,
+      contentType: task?.contentType || topic?.contentType,
+      material: task?.material || topic?.material,
+      interaction: task?.interaction || topic?.interaction
+    };
+  }
   if (topic) return topic;
   const fallback = getFallbackTopicPool(data)[selectedTopicIndex] || getFallbackTopicPool(data)[0];
   return {
@@ -491,12 +578,13 @@ const getSelectedTopic = (data) => {
     stage: fallbackStage(selectedTopicIndex),
     intent: fallbackIntent(selectedTopicIndex),
     whyNow: "用于建立账号记忆点，并为后续系列内容铺垫。",
+    material: data.assets || data.story || "用一条真实经历或截图做证据。",
     contentType: data.format
   };
 };
 
-const getTopicOptions = (data) => aiPlan?.topics?.length
-  ? aiPlan.topics
+const getTopicOptions = (data) => aiPlan?.topics?.length || aiPlan?.tasks?.length
+  ? getTaskOptions(data)
   : getFallbackTopicPool(data).map((topic, index) => ({
     title: topic[0],
     category: topic[1],
@@ -505,8 +593,41 @@ const getTopicOptions = (data) => aiPlan?.topics?.length
     stage: fallbackStage(index),
     intent: fallbackIntent(index),
     whyNow: "用于建立账号记忆点，并为后续系列内容铺垫。",
+    material: data.assets || data.story || "用一条真实经历或截图做证据。",
     contentType: data.format
   }));
+
+const getModeNotice = () => {
+  if (appMode === "live") {
+    return {
+      className: "mode-notice live",
+      title: "真实生成结果",
+      body: "这版内容来自当前填写的创作者画像和 AI 生成结果。"
+    };
+  }
+  if (appMode === "demo") {
+    return {
+      className: "mode-notice demo",
+      title: "演示样例结果",
+      body: "当前未连上真实 API，页面展示的是本地样例，适合先体验流程和交互。"
+    };
+  }
+  return {
+    className: "mode-notice",
+    title: "等待生成",
+    body: "填写画像后会生成一版起号方案；没有配置 API 时会进入演示模式。"
+  };
+};
+
+const renderModeNotice = () => {
+  const notice = getModeNotice();
+  return `
+    <div class="${notice.className}">
+      <b>${notice.title}</b>
+      <span>${notice.body}</span>
+    </div>
+  `;
+};
 
 const renderContent = (data) => {
   const topic = getSelectedTopic(data);
@@ -563,23 +684,18 @@ const renderContent = (data) => {
           </select>
         </label>
         <div class="mode-row">
-          <button class="mode-button active" data-content-mode="图文 + 视频" type="button">图文 + 视频</button>
-          <button class="mode-button" data-content-mode="图文" type="button">只要图文</button>
-          <button class="mode-button" data-content-mode="视频" type="button">只要视频</button>
+          <button class="mode-button ${contentMode === "图文 + 视频" ? "active" : ""}" data-content-mode="图文 + 视频" type="button">图文 + 视频</button>
+          <button class="mode-button ${contentMode === "图文" ? "active" : ""}" data-content-mode="图文" type="button">只要图文</button>
+          <button class="mode-button ${contentMode === "视频" ? "active" : ""}" data-content-mode="视频" type="button">只要视频</button>
         </div>
-        <p class="muted">选择后会针对当前选题生成完整正文、脚本、素材建议和发布建议。</p>
-        <button class="primary-button content-generate-button" id="generateContent" type="button">生成这条内容</button>
+        <p class="muted">${appMode === "demo" ? "当前为演示模式，会生成一版可预览样稿；接入 API 后会换成真实 AI 结果。" : "选择后会针对当前选题生成完整正文、脚本、素材建议和发布建议。"}</p>
+        <button class="primary-button content-generate-button" id="generateContent" type="button">${appMode === "demo" ? "生成演示样稿" : "生成这条内容"}</button>
       </section>
     `;
     bindContentControls();
     return;
   }
 
-  const graphic = contentPlan.graphic || {};
-  const video = contentPlan.video || {};
-  const showGraphic = contentMode !== "视频";
-  const showVideo = contentMode !== "图文";
-  const isWechatArticle = data.platform === "公众号";
   $("contentResult").innerHTML = `
     <section class="content-brief">
       <div class="brief-card">
@@ -592,58 +708,139 @@ const renderContent = (data) => {
       </div>
     </section>
 
-    ${showGraphic ? `<article class="output-card graphic-output">
-      <header>
-        <p class="eyebrow">Graphic Post</p>
-        <h4>${data.platform} 图文版</h4>
-      </header>
-      <div class="output-body">
-        <div class="cover-preview">
-          <span>${isWechatArticle ? "导语摘要" : "封面"}</span>
-          <strong>${graphic.coverTitle || topic.title}</strong>
-          <p>${graphic.coverSubtitle || (isWechatArticle ? "用一段导语交代问题、冲突和读者收益。" : "用真实场景和具体收益做封面副标题。")}</p>
-        </div>
-        <div class="output-section">
-          <span class="section-kicker">${isWechatArticle ? "文章标题" : "发布标题"}</span>
-          <h4>${graphic.postTitle || topic.title}</h4>
-        </div>
-        <div class="article-copy">${formatParagraphs(graphic.body || "内容正文生成失败，请重新生成。")}</div>
-        <div class="output-section">
-          <span class="section-kicker">${isWechatArticle ? "文中插图建议" : "配图建议"}</span>
-          <ul>${(graphic.imagePlan || []).map((item) => `<li>${item}</li>`).join("")}</ul>
-        </div>
-        <div class="tag-row output-tags">${(graphic.tags || []).map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
-      </div>
-    </article>` : ""}
-
-    ${showVideo ? `<article class="output-card video-output">
-      <header>
-        <p class="eyebrow">Video Script</p>
-        <h4>短视频/口播版</h4>
-      </header>
-      <div class="output-body">
-        <div class="output-section hook-section">
-          <span class="section-kicker">0-3 秒钩子</span>
-          <h4>${video.hook || `直接抛出选题冲突：“${topic.title}”。`}</h4>
-        </div>
-        <div class="script-table">
-          ${(video.script || []).map((item) => `
-            <div class="script-row">
-              <strong>${item.time || "片段"}</strong>
-              <p>${item.voice || ""}</p>
-              <span>画面：${item.visual || "真实场景/截图/操作录屏"}</span>
-              <span>字幕：${item.subtitle || "提炼一句关键结论"}</span>
-            </div>
-          `).join("")}
-        </div>
-        <div class="output-section">
-          <span class="section-kicker">镜头清单</span>
-          <ul>${(video.shotList || []).map((item) => `<li>${item}</li>`).join("")}</ul>
-        </div>
-      </div>
-    </article>` : ""}
+    ${renderPlatformOutput(data, topic)}
   `;
 };
+
+const renderPlatformOutput = (data, topic) => {
+  if (data.platform === "公众号") return renderArticleOutput(contentPlan.article || {}, topic);
+  if (data.platform === "B站") return renderLongVideoOutput(contentPlan.longVideo || {}, topic);
+  if (data.platform === "抖音" || data.platform === "视频号") return renderVideoOutput(contentPlan.video || {}, data.platform, topic);
+  return renderNoteOutput(contentPlan.note || contentPlan.graphic || {}, topic);
+};
+
+const renderArticleOutput = (article, topic) => `
+  <article class="output-card graphic-output">
+    <header>
+      <p class="eyebrow">WeChat Article</p>
+      <h4>公众号文章</h4>
+    </header>
+    <div class="output-body">
+      <div class="output-section">
+        <span class="section-kicker">标题</span>
+        <h4>${article.articleTitle || topic.title}</h4>
+      </div>
+      <div class="cover-preview">
+        <span>导语摘要</span>
+        <strong>${article.dek || "用一段摘要说明问题、冲突和读者收益。"}</strong>
+        <p>${article.intro || ""}</p>
+      </div>
+      <div class="article-copy">
+        ${(article.sections || []).map((section) => `
+          <h4>${section.heading || "小标题"}</h4>
+          ${formatParagraphs(section.body || "")}
+          ${section.insert ? `<p class="muted">插图/案例：${section.insert}</p>` : ""}
+        `).join("") || formatParagraphs(article.body || "内容正文生成失败，请重新生成。")}
+      </div>
+      <div class="output-section">
+        <span class="section-kicker">金句</span>
+        <ul>${(article.pullQuotes || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+      </div>
+      <div class="output-section">
+        <span class="section-kicker">文中素材</span>
+        <ul>${(article.mediaPlan || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+      </div>
+      <div class="article-copy">${formatParagraphs(article.ending || "")}</div>
+    </div>
+  </article>
+`;
+
+const renderNoteOutput = (note, topic) => `
+  <article class="output-card graphic-output">
+    <header>
+      <p class="eyebrow">Xiaohongshu Note</p>
+      <h4>小红书笔记</h4>
+    </header>
+    <div class="output-body">
+      <div class="cover-preview">
+        <span>首图</span>
+        <strong>${note.coverTitle || topic.title}</strong>
+        <p>${note.coverSubtitle || "用真实场景和具体收益做封面副标题。"}</p>
+      </div>
+      <div class="output-section">
+        <span class="section-kicker">发布标题</span>
+        <h4>${note.postTitle || topic.title}</h4>
+      </div>
+      <div class="article-copy">${formatParagraphs(note.body || "内容正文生成失败，请重新生成。")}</div>
+      <div class="output-section">
+        <span class="section-kicker">配图建议</span>
+        <ul>${(note.imagePlan || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+      </div>
+      <div class="tag-row output-tags">${(note.tags || []).map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
+    </div>
+  </article>
+`;
+
+const renderVideoOutput = (video, platform, topic) => `
+  <article class="output-card video-output">
+    <header>
+      <p class="eyebrow">Video Script</p>
+      <h4>${platform}脚本</h4>
+    </header>
+    <div class="output-body">
+      <div class="output-section hook-section">
+        <span class="section-kicker">开头</span>
+        <h4>${video.hook || `直接抛出选题冲突：“${topic.title}”。`}</h4>
+      </div>
+      <div class="script-table">
+        ${(video.script || []).map((item) => `
+          <div class="script-row">
+            <strong>${item.time || "片段"}</strong>
+            <p>${item.voice || ""}</p>
+            <span>画面：${item.visual || "真实场景/截图/操作录屏"}</span>
+            <span>字幕：${item.subtitle || "提炼一句关键结论"}</span>
+          </div>
+        `).join("")}
+      </div>
+      <div class="output-section">
+        <span class="section-kicker">镜头清单</span>
+        <ul>${(video.shotList || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+      </div>
+      <div class="article-copy">${formatParagraphs(video.caption || video.commentPrompt || "")}</div>
+    </div>
+  </article>
+`;
+
+const renderLongVideoOutput = (video, topic) => `
+  <article class="output-card video-output">
+    <header>
+      <p class="eyebrow">Bilibili Video</p>
+      <h4>B站中长视频</h4>
+    </header>
+    <div class="output-body">
+      <div class="cover-preview">
+        <span>封面文案</span>
+        <strong>${video.coverText || topic.title}</strong>
+        <p>${video.opening || ""}</p>
+      </div>
+      <div class="script-table">
+        ${(video.chapters || []).map((item) => `
+          <div class="script-row">
+            <strong>${item.time || "章节"}</strong>
+            <p>${item.heading || ""}</p>
+            <span>${(item.talkingPoints || []).join(" / ")}</span>
+            <span>素材：${item.material || "录屏/截图/口播补充"}</span>
+          </div>
+        `).join("")}
+      </div>
+      <div class="output-section">
+        <span class="section-kicker">素材清单</span>
+        <ul>${(video.assetList || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+      </div>
+      <div class="article-copy">${formatParagraphs(video.description || "")}</div>
+    </div>
+  </article>
+`;
 
 const formatParagraphs = (text) => String(text)
   .split(/\n+/)
@@ -655,7 +852,9 @@ const bindContentControls = () => {
   $("contentTopicSelect")?.addEventListener("change", (event) => {
     selectedTopicIndex = Number(event.target.value);
     contentPlan = null;
-    renderContent(getSafeFormData());
+    reviewPlan = null;
+    renderAll(false);
+    switchTab("content");
   });
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -746,7 +945,7 @@ const exportPlanToPdf = () => {
           button, select, .content-generate-button, .mode-row, .topic-select-label {
             display: none !important;
           }
-          .tab-page, .content-columns, .output-stack, .topic-list, .research-strip {
+          .tab-page, .content-columns, .output-stack, .topic-list, .research-strip, .agent-trace, .review-layout {
             display: block !important;
           }
           @media print {
@@ -767,10 +966,11 @@ const exportPlanToPdf = () => {
             <div><b>账号阶段</b><br>${escapeHtml(data.stage)}</div>
           </div>
         </section>
-        ${sectionHtml("01 账号定位", "#positioning")}
-        ${sectionHtml("02 起号路径", "#topics")}
+        ${sectionHtml("01 Agent 诊断", "#positioning")}
+        ${sectionHtml("02 增长任务", "#topics")}
         ${sectionHtml("03 内容生成", "#content")}
-        ${sectionHtml("04 发布优化", "#publish")}
+        ${sectionHtml("04 发布执行", "#publish")}
+        ${sectionHtml("05 复盘迭代", "#review")}
       </body>
     </html>
   `);
@@ -870,14 +1070,152 @@ const renderPublish = (data) => {
   `;
 };
 
+const renderReview = (data) => {
+  const topic = getSelectedTopic(data);
+  const topicOptions = getTopicOptions(data);
+  if (isReviewGenerating) {
+    $("reviewResult").innerHTML = `
+      <section class="content-loading-panel review-loading">
+        <div class="content-loader">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <p class="eyebrow">Review Agent</p>
+          <h4>正在分析发布数据和评论反馈</h4>
+          <p class="muted">Agent 会判断问题更可能出在标题、开头、选题、素材、内容结构还是互动设计。</p>
+        </div>
+      </section>
+    `;
+    return;
+  }
+
+  $("reviewResult").innerHTML = `
+    <section class="review-layout">
+      <form class="review-form" id="reviewForm">
+        <p class="eyebrow">Manual Metrics</p>
+        <h4>输入发布后的关键数据</h4>
+        <label>
+          选择复盘的任务
+          <select id="reviewTopicSelect">
+            ${topicOptions.map((item, index) => `<option value="${index}" ${index === selectedTopicIndex ? "selected" : ""}>${index + 1}. ${item.title}</option>`).join("")}
+          </select>
+        </label>
+        <div class="metric-input-grid">
+          <label>曝光/阅读<input id="metricViews" inputmode="numeric" value="1200" /></label>
+          <label>点赞<input id="metricLikes" inputmode="numeric" value="48" /></label>
+          <label>收藏<input id="metricSaves" inputmode="numeric" value="16" /></label>
+          <label>评论<input id="metricComments" inputmode="numeric" value="9" /></label>
+          <label>转发<input id="metricShares" inputmode="numeric" value="3" /></label>
+          <label>完播/读完率<input id="metricCompletionRate" value="32%" /></label>
+        </div>
+        <label>
+          典型评论反馈
+          <textarea id="metricCommentSamples" rows="5">有人说“很真实”，也有人问有没有模板可以直接用。</textarea>
+        </label>
+        <label>
+          实际发布稿
+          <textarea id="actualPublishedContent" rows="7" placeholder="粘贴你最终发出去的正文、口播稿或视频脚本。可以和 AI 初稿不同，Agent 会按真实发布版本复盘。"></textarea>
+        </label>
+        <button class="primary-button" id="generateReview" type="submit">${appMode === "demo" ? "生成演示复盘" : "让 Agent 复盘"}</button>
+        <p class="muted">复盘数据先手动填写。实际发布稿越接近最终版本，复盘判断会越准确。</p>
+      </form>
+
+      <section class="review-output">
+        <div class="brief-card">
+          <h4>当前复盘对象</h4>
+          <p>${topic.title}</p>
+        </div>
+        ${reviewPlan ? renderReviewOutput(reviewPlan) : `
+          <div class="empty-review">
+            <p class="eyebrow">Waiting Review</p>
+            <h4>发布后把数据填进来，Agent 会给下一条内容判断</h4>
+            <p class="muted">这里会输出问题归因、证据和下一步动作，不展示内部 Prompt 迭代信息。</p>
+          </div>
+        `}
+      </section>
+    </section>
+  `;
+  bindReviewControls();
+};
+
+const renderReviewOutput = (plan) => {
+  const review = plan.review || {};
+  return `
+    <article class="review-card">
+      <span class="section-kicker">复盘结论</span>
+      <h4>${review.summary || "需要更多数据继续判断"}</h4>
+      <p>${review.diagnosis || ""}</p>
+      <div class="tag-row">
+        <span class="tag">主要问题：${review.bottleneck || "内容结构"}</span>
+      </div>
+      <ul>${(review.evidence || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+      <div class="output-section">
+        <span class="section-kicker">下一步动作</span>
+        <p>${review.nextAction || "下一条优先做更具体、更可保存的内容。"}</p>
+      </div>
+    </article>
+  `;
+};
+
+const bindReviewControls = () => {
+  $("reviewTopicSelect")?.addEventListener("change", (event) => {
+    selectedTopicIndex = Number(event.target.value);
+    reviewPlan = null;
+    renderAll(false);
+    switchTab("review");
+  });
+  $("reviewForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    generateReview();
+  });
+};
+
+const collectReviewMetrics = () => ({
+  views: $("metricViews")?.value.trim() || "",
+  likes: $("metricLikes")?.value.trim() || "",
+  saves: $("metricSaves")?.value.trim() || "",
+  comments: $("metricComments")?.value.trim() || "",
+  shares: $("metricShares")?.value.trim() || "",
+  completionRate: $("metricCompletionRate")?.value.trim() || "",
+  commentSamples: $("metricCommentSamples")?.value.trim() || "",
+  actualPublishedContent: $("actualPublishedContent")?.value.trim() || ""
+});
+
 const renderAll = (resetTopic = true) => {
   if (resetTopic) selectedTopicIndex = 0;
   const data = getSafeFormData();
+  document.querySelectorAll("#positioning .mode-notice").forEach((notice) => notice.remove());
   renderResearch(data);
+  renderAgentTrace(data);
   renderPositioning(data);
   renderTopics(data);
   renderContent(data);
   renderPublish(data);
+  renderReview(data);
+  const target = $("researchResult");
+  if (target) target.insertAdjacentHTML("beforebegin", renderModeNotice());
+};
+
+const submitEvalSnapshot = async (stage, extra = {}) => {
+  if (isFileMode()) return;
+  try {
+    await fetch("/api/eval/snapshot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        stage,
+        profile: getFormData(),
+        plan: aiPlan,
+        content: contentPlan,
+        review: reviewPlan,
+        ...extra
+      })
+    });
+  } catch (error) {
+    console.warn(`Eval snapshot failed: ${error.message}`);
+  }
 };
 
 const setApiStatus = (message, type = "") => {
@@ -977,28 +1315,42 @@ const stopLoadingMotion = () => {
 };
 
 const generateWithApi = async (resetTopic = true) => {
+  const requestId = generationRequestId + 1;
+  generationRequestId = requestId;
   const data = getFormData();
+  appMode = "loading";
   setLoading(true);
-  setApiStatus("正在生成个性化方案，请耐心等待 1-2 分钟...", "live");
-  showGenerationScreen("正在生成起号方案。", "请耐心等待 1-2 分钟。");
+  setApiStatus("正在生成定位、路径和发布策略；完整正文会在内容页单独生成。", "live");
+  showGenerationScreen("正在生成起号策略。", "先生成定位与一周路径，完整正文进入内容页后再生成。");
   startLoadingMotion();
 
   try {
     if (isFileMode()) {
       throw new Error("当前是 file:// 静态预览，真实 API 需要打开 http://localhost:5173/ 或线上部署地址。");
     }
-    aiPlan = sanitizeForHtml(await postJsonWithRetry("/api/generate", data));
+    const result = sanitizeForHtml(await postJsonWithRetry("/api/generate", data));
+    if (generationRequestId !== requestId) return;
+    aiPlan = result;
+    appMode = "live";
     contentPlan = null;
+    reviewPlan = null;
     renderAll(resetTopic);
     setApiStatus("已生成真实方案", "live");
+    submitEvalSnapshot("generate");
   } catch (error) {
+    if (generationRequestId !== requestId) return;
     aiPlan = null;
+    appMode = "demo";
+    contentPlan = null;
+    reviewPlan = null;
     renderAll(resetTopic);
-    setApiStatus(`API 未连接，已回退静态演示：${error.message}`, "error");
+    setApiStatus(`已进入演示模式：${friendlyApiError(error)}`, "demo");
   } finally {
-    stopLoadingMotion();
-    hideGenerationScreen();
-    setLoading(false);
+    if (generationRequestId === requestId) {
+      stopLoadingMotion();
+      hideGenerationScreen();
+      setLoading(false);
+    }
   }
 };
 
@@ -1006,28 +1358,223 @@ const generateSelectedContent = async () => {
   const data = getFormData();
   const renderData = getSafeFormData();
   const topic = getSelectedTopic(data);
-  const button = $("generateContent");
   isContentGenerating = true;
   renderContent(renderData);
-  setApiStatus("正在生成完整内容，预计需要 1-2 分钟...", "live");
+  setApiStatus(appMode === "demo" ? "正在生成演示样稿..." : "正在生成完整内容，预计需要 1-2 分钟...", appMode === "demo" ? "demo" : "live");
 
   try {
-    contentPlan = sanitizeForHtml(await postJsonWithRetry("/api/content", {
-      ...data,
-      contentMode,
-      topic
-    }));
+    if (appMode === "demo" || isFileMode()) {
+      await delay(600);
+      contentPlan = sanitizeForHtml(buildDemoContent(data, topic));
+    } else {
+      contentPlan = sanitizeForHtml(await postJsonWithRetry("/api/content", {
+        ...data,
+        contentMode,
+        topic
+      }));
+    }
     isContentGenerating = false;
     renderContent(renderData);
     renderPublish(renderData);
-    setApiStatus("已生成当前选题的完整内容", "live");
+    setApiStatus(appMode === "demo" ? "已生成演示样稿，接入 API 后可生成真实内容" : "已生成当前选题的完整内容", appMode === "demo" ? "demo" : "live");
+    submitEvalSnapshot("content");
   } catch (error) {
     isContentGenerating = false;
     renderContent(renderData);
-    setApiStatus(`内容生成失败：${error.message}`, "error");
+    setApiStatus(`内容生成失败：${friendlyApiError(error)}`, "error");
   } finally {
     isContentGenerating = false;
   }
+};
+
+const generateReview = async () => {
+  const data = getFormData();
+  const renderData = getSafeFormData();
+  const topic = getSelectedTopic(data);
+  const metrics = collectReviewMetrics();
+  isReviewGenerating = true;
+  renderReview(renderData);
+  setApiStatus(appMode === "demo" ? "正在生成演示复盘..." : "复盘 Agent 正在分析发布数据...", appMode === "demo" ? "demo" : "live");
+
+  try {
+    if (appMode === "demo" || isFileMode()) {
+      await delay(600);
+      reviewPlan = sanitizeForHtml(buildDemoReview(data, topic, metrics));
+    } else {
+      reviewPlan = sanitizeForHtml(await postJsonWithRetry("/api/review", {
+        ...data,
+        topic,
+        content: contentPlan,
+        metrics
+      }));
+    }
+    isReviewGenerating = false;
+    renderReview(renderData);
+    setApiStatus(appMode === "demo" ? "已生成演示复盘，接入 API 后可分析真实输入" : "复盘完成，已生成下一条增长任务", appMode === "demo" ? "demo" : "live");
+    submitEvalSnapshot("review", { metrics });
+  } catch (error) {
+    isReviewGenerating = false;
+    renderReview(renderData);
+    setApiStatus(`复盘失败：${friendlyApiError(error)}`, "error");
+  } finally {
+    isReviewGenerating = false;
+  }
+};
+
+const friendlyApiError = (error) => {
+  if (error?.status === 429) return "请求过于频繁，请稍后再试。";
+  if (String(error?.message || "").includes("KIMI_API_KEY")) return "服务端还没有配置 API Key。";
+  if (isFileMode()) return "当前是本地文件预览，需要通过 localhost 或线上地址访问真实 API。";
+  return "真实生成暂时不可用，已保留完整演示流程。";
+};
+
+const buildDemoContent = (data, topic) => {
+  const audience = data.audience || "目标用户";
+  const niche = data.niche || "内容方向";
+  const platform = data.platform || "小红书";
+  const baseTitle = topic.title || `${niche}的一条可发布内容`;
+  const audienceMoment = data.audienceMoment || "刚遇到具体问题，不知道第一步怎么做";
+  const story = data.story || "一段真实经历";
+  const boundary = data.contentBoundary || "不装专家，只讲真实过程和可复制动作";
+  const assets = data.assets || "真实经历、截图或复盘笔记";
+  return {
+    selectedTopic: {
+      title: baseTitle,
+      strategy: `这条内容先命中“${audienceMoment}”这个时刻，再用“${story}”作为证据，遵守“${boundary}”的边界，最后用评论问题收集下一条选题。`
+    },
+    article: {
+      articleTitle: baseTitle,
+      dek: `给 ${audience} 的一篇完整复盘，重点解决“${audienceMoment}”。`,
+      intro: `${audience} 最容易被打动的，不是一个完美方法，而是你真的理解他们在“${audienceMoment}”时的犹豫。`,
+      sections: [
+        {
+          heading: "先从一个真实场景开始",
+          body: `这篇文章可以用“${story}”开场，再展示你手里已有的材料：${assets}。这样读者会先相信你经历过这个问题。`,
+          insert: assets
+        },
+        {
+          heading: "把过程拆成可复制动作",
+          body: `不要直接给结论。先写当时发生了什么，再写你怎么尝试，最后写结果和下一次会怎么改。内容边界是：${boundary}。`,
+          insert: "过程表格或复盘截图"
+        }
+      ],
+      pullQuotes: ["可信过程比完美答案更重要。", "评论区的问题，就是下一篇文章的题目。"],
+      ending: "结尾可以邀请读者留言：你现在最卡的是哪一步？下一篇就从评论最多的问题继续拆。",
+      mediaPlan: [`文中插入：${assets}`, "插入一张步骤表", "插入一张复盘前后对比"]
+    },
+    note: {
+      coverTitle: baseTitle,
+      coverSubtitle: `给 ${audience} 的低门槛做法`,
+      postTitle: baseTitle,
+      body: [
+        `${audience} 最容易被打动的，不是一个完美方法，而是你真的理解他们在“${audienceMoment}”时的犹豫。`,
+        `所以这条内容不要先讲大道理。先拿“${story}”开场，再展示你手里已有的材料：${assets}。越具体，用户越容易判断这是不是和自己有关。`,
+        `第二步，把过程拆成 3 个动作：先做什么、怎么判断有没有用、下一次怎么优化。不要只给结论，因为新号最需要建立的是可信过程。`,
+        `第三步，记住你的内容边界：${boundary}。这会让账号更像一个稳定的人，而不是今天讲干货、明天追热点的杂货铺。`,
+        `如果这条内容数据不错，下一条可以继续做避坑版、模板版或真实复盘版，让用户看到这是一个能持续更新的栏目。`
+      ].join("\n\n"),
+      imagePlan: [
+        "首图：一句具体痛点 + 结果承诺",
+        "过程图：把 3 个动作做成清单",
+        `素材图：展示 ${assets}`,
+        "结尾图：放评论区互动问题"
+      ],
+      tags: platform === "公众号" ? ["个人复盘", "内容创作", "普通人成长"] : ["KOC起号", niche, "内容创作", "普通人成长"]
+    },
+    graphic: {},
+    video: {
+      title: baseTitle,
+      hook: `别一上来就做完整人设，先把“${baseTitle}”这件事讲清楚。`,
+      script: [
+        {
+          time: "0-3秒",
+          voice: `如果你也在${audienceMoment}，先别急着找爆款模板。`,
+          visual: "正面口播，屏幕出现选题标题",
+          subtitle: "先命中一个真实时刻"
+        },
+        {
+          time: "3-15秒",
+          voice: `我会先拿自己的经历讲，比如：${story}。`,
+          visual: `展示 ${assets}`,
+          subtitle: "可信过程 > 完美人设"
+        },
+        {
+          time: "15-40秒",
+          voice: `按三个步骤写：先说具体场景，再说你怎么尝试，最后说结果和下一步怎么改。边界是：${boundary}。`,
+          visual: "三段式清单逐条出现",
+          subtitle: "场景 / 尝试 / 复盘"
+        },
+        {
+          time: "40-60秒",
+          voice: "发布后重点看评论区，用户问得最多的问题，就是你下一条内容的题目。",
+          visual: "切到评论区问题和下一条选题草稿",
+          subtitle: "评论区就是下一条选题库"
+        }
+      ],
+      caption: `围绕“${baseTitle}”做一次真实复盘。`,
+      commentPrompt: "你第一条内容最想解决什么问题？",
+      shotList: ["正面口播", "素材截图", "三步清单", "评论区问题"]
+    },
+    longVideo: {
+      title: baseTitle,
+      coverText: baseTitle,
+      opening: `这期视频会用“${story}”拆一条普通人也能照做的内容路径。`,
+      chapters: [
+        { time: "00:00", heading: "为什么先讲真实场景", talkingPoints: ["用户为什么会信你", audienceMoment], material: assets },
+        { time: "02:00", heading: "如何拆成可执行步骤", talkingPoints: ["场景", "尝试", "复盘"], material: "复盘表或录屏" },
+        { time: "05:00", heading: "下一条内容怎么延展", talkingPoints: ["评论区问题", "系列栏目"], material: "选题清单" }
+      ],
+      description: `适合围绕 ${niche} 做一条结构完整的 B站视频。`,
+      danmakuPrompts: ["你也遇到过这个问题吗？", "你更想看模板还是案例？"],
+      assetList: [assets, "口播画面", "选题清单"]
+    },
+    publish: {
+      titles: [baseTitle, `做 ${niche} 新号，我建议先发这一类内容`, `别急着找爆款，先把这件事讲清楚`],
+      bestTime: getPlatformRule(platform).timing,
+      firstComment: "你现在最卡的是定位、选题还是表达？我可以按这个继续拆下一条。",
+      interactionQuestion: "你第一条内容最想解决什么问题？",
+      nextRevision: "如果点击低，先改标题里的具体场景；如果收藏低，补一张可保存清单。"
+    }
+  };
+};
+
+const buildDemoReview = (data, topic, metrics) => {
+  const saves = Number(metrics.saves || 0);
+  const likes = Number(metrics.likes || 0);
+  const comments = Number(metrics.comments || 0);
+  const saveSignal = saves > 0 && likes > 0 ? saves / Math.max(likes, 1) : 0;
+  const likelyBottleneck = saveSignal < 0.35 ? "内容结构" : comments < 5 ? "互动设计" : "选题延展";
+  const nextTitle = saveSignal < 0.35
+    ? `${topic.title}：可以直接套用的模板版`
+    : `${topic.title} 后，评论区问得最多的 3 个问题`;
+
+  return {
+    review: {
+      summary: saveSignal < 0.35
+        ? "这条内容有一定共鸣，但可保存价值还不够强。"
+        : "这条内容已经验证了用户兴趣，下一步适合做系列延展。",
+      diagnosis: `从手动输入的数据看，点赞 ${metrics.likes || 0}、收藏 ${metrics.saves || 0}、评论 ${metrics.comments || 0}。${metrics.actualPublishedContent ? "结合你粘贴的实际发布稿，" : ""}如果评论反馈集中在“真实”和“想要模板”，说明用户认可场景，但还需要更明确的可执行交付。`,
+      bottleneck: likelyBottleneck,
+      evidence: [
+        `收藏/点赞关系显示可保存结构${saveSignal < 0.35 ? "偏弱" : "有一定基础"}。`,
+        `典型评论反馈：${metrics.commentSamples || "暂无评论样本"}`,
+        `当前选题目标是“${topic.stage || topic.goal || "验证方向"}”，下一条应继续沿着同一问题做更具体版本。`
+      ],
+      nextAction: "下一条不要换大方向，优先把这条内容改成模板、清单或案例拆解，验证用户是否愿意收藏和继续提问。"
+    },
+    nextTask: {
+      title: nextTitle,
+      goal: saveSignal < 0.35 ? "提高收藏价值" : "延展评论区需求",
+      format: data.platform === "公众号" ? "结构化长文" : "图文模板",
+      material: data.assets || topic.material || "已有素材和评论反馈",
+      whyNext: "用户已经对当前场景有反馈，继续深挖比立刻换方向更容易验证账号切口。",
+      observeMetric: "重点观察收藏率、评论中的模板需求和是否出现新的高频问题。"
+    },
+    promptIterationHint: {
+      issue: "评分体系尚未正式建立，当前只做复盘归因和下一步建议。",
+      suggestion: "后续评测标准应拆成标题点击力、素材绑定度、可保存结构、互动触发和平台适配五类指标。"
+    }
+  };
 };
 
 const switchTab = (tabId) => {
@@ -1063,6 +1610,7 @@ $("exportPlan")?.addEventListener("click", exportPlanToPdf);
 
 $("shuffleTopics").addEventListener("click", async () => {
   contentPlan = null;
+  reviewPlan = null;
   selectedTopicIndex = 0;
   if (aiPlan && !isFileMode()) {
     await generateWithApi(true);
@@ -1077,6 +1625,7 @@ $("shuffleTopics").addEventListener("click", async () => {
 $("restartOnboarding").addEventListener("click", () => {
   aiPlan = null;
   contentPlan = null;
+  reviewPlan = null;
   wizardStep = 0;
   showOnboarding();
 });
@@ -1089,7 +1638,7 @@ const setWizardProgress = () => {
     dot.classList.toggle("active", index <= wizardStep);
   });
   $("prevStep").style.visibility = wizardStep === 0 ? "hidden" : "visible";
-  $("nextStep").textContent = wizardStep === 4 ? "生成我的起号方案" : "下一步";
+  $("nextStep").textContent = wizardStep === 8 ? "生成我的起号方案" : "下一步";
 };
 
 document.querySelectorAll(".choice-grid").forEach((grid) => {
@@ -1125,7 +1674,7 @@ $("prevStep").addEventListener("click", () => {
 });
 
 $("nextStep").addEventListener("click", () => {
-  if (wizardStep < 4) {
+  if (wizardStep < 8) {
     wizardStep += 1;
     setWizardProgress();
     return;
@@ -1145,11 +1694,14 @@ $("nextStep").addEventListener("click", () => {
     edge: finalEdge,
     bottleneck: finalBottleneck,
     assets: $("wizardAssets").value.trim(),
-    platform: $("wizardPlatform").value,
+    story: $("wizardStory").value.trim(),
+    audienceMoment: wizardState.audienceMoment,
+    contentBoundary: wizardState.contentBoundary,
+    platform: wizardState.platform,
     format: "图文 + 短视频",
     goal: "接效率工具/课程类商单",
-    timeBudget: $("wizardTimeBudget").value,
-    pain: `${finalBottleneck}。我的优势是${finalEdge}，已有素材包括：${$("wizardAssets").value}。`
+    timeBudget: wizardState.timeBudget,
+    pain: `${finalBottleneck}。我的优势是${finalEdge}，已有素材包括：${$("wizardAssets").value}。最有把握连续讲的经历是：${$("wizardStory").value}。`
   });
   $("landing")?.classList.add("hidden");
   $("onboarding").classList.add("hidden");

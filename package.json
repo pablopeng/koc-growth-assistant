@@ -8,6 +8,9 @@
   },
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "eval": "node scripts/run-eval.js",
+    "eval:live": "node scripts/run-eval.js --live --judge",
+    "eval:judge": "node scripts/run-eval.js --live --judge"
   }
 }

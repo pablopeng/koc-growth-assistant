@@ -29,13 +29,13 @@
             </p>
             <div class="hero-actions">
               <button class="primary-button" id="startDiagnosis" type="button">开始生成我的方案</button>
-              <span>5 步填写画像，约 2 分钟生成第一版</span>
+              <span>快速选择画像，约 2 分钟生成第一版</span>
             </div>
           </div>
 
           <div class="hero-panel">
             <div class="hero-panel-head">
-              <span>Live Preview</span>
+              <span>Demo Preview</span>
               <b>一次生成四类交付</b>
             </div>
             <div class="hero-flow">
@@ -78,6 +78,10 @@
 
         <div class="wizard-progress">
           <span class="active"></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
           <span></span>
           <span></span>
           <span></span>
@@ -143,8 +147,57 @@
 
         <div class="wizard-step" data-step="4">
           <p class="eyebrow">Step 05</p>
-          <h2>最后补充一点背景</h2>
-          <p class="helper">这一步帮助系统避开泛泛建议，生成更像你的账号策略。</p>
+          <h2>你主要想发在哪个平台？</h2>
+          <p class="helper">不同平台会影响标题、内容形式和发布建议。</p>
+          <div class="choice-grid" data-bind="platform">
+            <button class="choice selected" data-value="小红书" type="button">小红书</button>
+            <button class="choice" data-value="抖音" type="button">抖音</button>
+            <button class="choice" data-value="视频号" type="button">视频号</button>
+            <button class="choice" data-value="B站" type="button">B站</button>
+            <button class="choice" data-value="公众号" type="button">公众号</button>
+          </div>
+        </div>
+
+        <div class="wizard-step" data-step="5">
+          <p class="eyebrow">Step 06</p>
+          <h2>你每周大概能投入多久？</h2>
+          <p class="helper">系统会按你的时间预算安排内容难度。</p>
+          <div class="choice-grid" data-bind="timeBudget">
+            <button class="choice selected" data-value="3-5 小时" type="button">3-5 小时</button>
+            <button class="choice" data-value="5-8 小时" type="button">5-8 小时</button>
+            <button class="choice" data-value="8-12 小时" type="button">8-12 小时</button>
+            <button class="choice" data-value="12 小时以上" type="button">12 小时以上</button>
+          </div>
+        </div>
+
+        <div class="wizard-step" data-step="6">
+          <p class="eyebrow">Step 07</p>
+          <h2>别人为什么会看你？</h2>
+          <p class="helper">选最接近你想提供的价值。</p>
+          <div class="choice-grid" data-bind="audienceMoment">
+            <button class="choice selected" data-value="刚遇到具体问题，不知道第一步怎么做" type="button">帮他迈出第一步</button>
+            <button class="choice" data-value="刷了很多方法，但不知道哪个适合自己" type="button">帮他做选择</button>
+            <button class="choice" data-value="想要模板、清单或低成本替代方案" type="button">给他现成模板</button>
+            <button class="choice" data-value="做了一段时间但看不到反馈，开始怀疑方向" type="button">陪他继续做下去</button>
+          </div>
+        </div>
+
+        <div class="wizard-step" data-step="7">
+          <p class="eyebrow">Step 08</p>
+          <h2>你希望内容更像哪种感觉？</h2>
+          <p class="helper">这会影响生成结果的表达方式。</p>
+          <div class="choice-grid" data-bind="contentBoundary">
+            <button class="choice selected" data-value="不装专家，只讲真实过程和可复制动作" type="button">真实记录</button>
+            <button class="choice" data-value="不做纯情绪陪伴，每条都要给方法或模板" type="button">方法模板</button>
+            <button class="choice" data-value="不强行种草，先用测评和对比建立信任" type="button">测评避坑</button>
+            <button class="choice" data-value="不追热点，优先做可持续系列栏目" type="button">稳定栏目</button>
+          </div>
+        </div>
+
+        <div class="wizard-step" data-step="8">
+          <p class="eyebrow">Step 09</p>
+          <h2>最后补充一点关键材料</h2>
+          <p class="helper">只填几句最具体的材料，生成会更像你。</p>
           <div class="quick-form">
             <label>
               你是谁
@@ -155,30 +208,13 @@
               <input id="wizardAudience" value="刚入职场的新人、想提升效率和表达能力的大学生" />
             </label>
             <label>
-              你手里已有的素材
+              可直接拿来发的素材
               <input id="wizardAssets" value="一些真实工作经历、工具使用截图、复盘笔记" />
             </label>
-            <div class="field-grid">
-              <label>
-                主平台
-                <select id="wizardPlatform">
-                  <option>小红书</option>
-                  <option>抖音</option>
-                  <option>视频号</option>
-                  <option>B站</option>
-                  <option>公众号</option>
-                </select>
-              </label>
-              <label>
-                每周投入
-                <select id="wizardTimeBudget">
-                  <option>3-5 小时</option>
-                  <option>5-8 小时</option>
-                  <option>8-12 小时</option>
-                  <option>12 小时以上</option>
-                </select>
-              </label>
-            </div>
+            <label>
+              你最有把握连续讲的经历
+              <input id="wizardStory" value="刚入职后如何拆任务、写复盘、用工具提效" />
+            </label>
           </div>
         </div>
 
@@ -237,29 +273,31 @@
           <button class="ghost-button wide-button" id="exportPlan" type="button">
             导出方案 PDF
           </button>
-          <p class="api-status" id="apiStatus">静态预览模式</p>
+          <p class="api-status" id="apiStatus">填写画像后生成第一版方案</p>
         </section>
       </aside>
 
       <section class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Demo Flow</p>
-            <h2>从模糊想法到一周可执行内容计划</h2>
+            <p class="eyebrow">Agent Workflow</p>
+            <h2>诊断、规划、生成、发布、复盘的内容增长闭环</h2>
           </div>
           <div class="status-strip">
-            <span>定位</span>
-            <span>选题</span>
-            <span>创作</span>
+            <span>诊断</span>
+            <span>规划</span>
+            <span>生成</span>
             <span>发布</span>
+            <span>复盘</span>
           </div>
         </header>
 
         <nav class="tabs" aria-label="结果模块">
-          <button class="tab active" data-tab="positioning" type="button">账号定位</button>
-          <button class="tab" data-tab="topics" type="button">起号路径</button>
+          <button class="tab active" data-tab="positioning" type="button">Agent 诊断</button>
+          <button class="tab" data-tab="topics" type="button">增长任务</button>
           <button class="tab" data-tab="content" type="button">内容生成</button>
-          <button class="tab" data-tab="publish" type="button">发布优化</button>
+          <button class="tab" data-tab="publish" type="button">发布执行</button>
+          <button class="tab" data-tab="review" type="button">复盘迭代</button>
         </nav>
 
         <section class="result-grid">
@@ -268,10 +306,11 @@
               <span class="step-index">01</span>
               <div>
                 <p class="eyebrow">Positioning</p>
-                <h3>AI 账号定位诊断</h3>
+                <h3>Agent 账号诊断</h3>
               </div>
             </div>
             <div id="researchResult" class="research-strip"></div>
+            <div id="agentTraceResult" class="agent-trace"></div>
             <div id="positioningResult" class="output-stack"></div>
           </article>
 
@@ -280,11 +319,11 @@
               <span class="step-index">02</span>
               <div>
                 <p class="eyebrow">Growth Path</p>
-                <h3>第一周阶梯式起号路径</h3>
+                <h3>第一周增长任务</h3>
               </div>
             </div>
           <div class="topic-toolbar">
-              <span id="topicHint">从建立信任开始，再验证方向，最后轻转化</span>
+              <span id="topicHint">每一天都有目标、素材、观察指标和下一步信号</span>
               <button class="ghost-button" id="shuffleTopics" type="button">换一组角度</button>
             </div>
             <div id="topicsResult" class="topic-list"></div>
@@ -306,10 +345,21 @@
               <span class="step-index">04</span>
               <div>
                 <p class="eyebrow">Publish Strategy</p>
-                <h3>发布与互动优化</h3>
+                <h3>发布执行与数据观察</h3>
               </div>
             </div>
             <div id="publishResult" class="output-stack"></div>
+          </article>
+
+          <article class="panel result-panel tab-page" id="review">
+            <div class="section-heading">
+              <span class="step-index">05</span>
+              <div>
+                <p class="eyebrow">Review Agent</p>
+                <h3>发布后复盘迭代</h3>
+              </div>
+            </div>
+            <div id="reviewResult" class="review-workspace"></div>
           </article>
         </section>
       </section>

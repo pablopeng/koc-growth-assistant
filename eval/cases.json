@@ -1,0 +1,172 @@
+[
+  {
+    "id": "workplace_newcomer_xhs",
+    "name": "职场新人小红书起号",
+    "profile": {
+      "profile": "刚工作一年的女生，在互联网运营岗",
+      "audience": "刚入职场的新人、想提升效率和表达能力的大学生",
+      "niche": "职场成长",
+      "edge": "真实经历",
+      "stage": "准备起号，还没正式发布",
+      "bottleneck": "不知道自己该做什么定位",
+      "assets": "真实工作经历、工具使用截图、周报和复盘笔记",
+      "story": "刚入职后如何拆任务、写复盘、用工具提效",
+      "audienceMoment": "刚遇到具体问题，不知道第一步怎么做",
+      "contentBoundary": "不装专家，只讲真实过程和可复制动作",
+      "platform": "小红书",
+      "format": "图文 + 短视频",
+      "goal": "接效率工具/课程类商单",
+      "timeBudget": "3-5 小时",
+      "pain": "不知道账号定位够不够清晰，每天选题靠刷平台，发完也不知道怎么复盘。"
+    },
+    "whySelected": "覆盖最典型的冷启动 KOC：用户有真实经历但定位模糊，适合检验 Agent 是否能把普通经历转成第一周增长任务。",
+    "reviewMetrics": {
+      "views": "1200",
+      "likes": "48",
+      "saves": "16",
+      "comments": "9",
+      "shares": "3",
+      "completionRate": "32%",
+      "commentSamples": "有人说很真实，也有人问有没有周报模板可以直接用。",
+      "actualPublishedContent": "我刚入职时最怕领导说你看着办。后来我把任务拆成目标、截止时间、交付物、风险四栏，每天下班前用 10 分钟复盘一次。"
+    },
+    "mustMention": ["刚工作一年", "真实工作经历", "周报", "第一周", "收藏"],
+    "avoid": ["抓取平台数据", "保证涨粉", "打造爆款矩阵"]
+  },
+  {
+    "id": "fitness_busy_worker_douyin",
+    "name": "忙碌上班族减脂抖音号",
+    "profile": {
+      "profile": "每天加班的产品经理，过去半年靠外卖减脂 8 斤",
+      "audience": "想减脂但没时间做饭和去健身房的上班族",
+      "niche": "健身减脂",
+      "edge": "陪伴记录",
+      "stage": "已经发过内容，但数据不稳定",
+      "bottleneck": "内容发了但互动很少",
+      "assets": "外卖订单截图、体重记录、午休步行路线、居家训练视频",
+      "story": "如何在连续加班时保持低成本饮食和 20 分钟运动",
+      "audienceMoment": "刷了很多方法，但不知道哪个适合自己",
+      "contentBoundary": "不装自律大神，只讲低门槛替代方案",
+      "platform": "抖音",
+      "format": "短视频",
+      "goal": "接健康食品和运动装备商单",
+      "timeBudget": "5-8 小时",
+      "pain": "有真实变化，但不知道怎么让用户评论和持续关注。"
+    },
+    "whySelected": "覆盖已有内容但互动不稳定的短视频场景，适合检验抖音平台适配、完播/评论导向和低门槛内容建议。",
+    "reviewMetrics": {
+      "views": "8600",
+      "likes": "310",
+      "saves": "92",
+      "comments": "17",
+      "shares": "20",
+      "completionRate": "41%",
+      "commentSamples": "评论区问外卖怎么点、晚上饿了怎么办、训练动作有没有版本。",
+      "actualPublishedContent": "加班减脂不要先买课，我这半年先改了晚餐外卖。主食减半、加一份蛋白质、饮料换无糖，做不到完美也能先减一点。"
+    },
+    "mustMention": ["外卖", "20 分钟", "加班", "完播", "评论区"],
+    "avoid": ["医学诊断", "保证瘦", "极端节食"]
+  },
+  {
+    "id": "local_food_wechat_video",
+    "name": "本地探店视频号",
+    "profile": {
+      "profile": "周末喜欢扫街的广州本地生活爱好者",
+      "audience": "想低成本安排周末约会或独处路线的年轻人",
+      "niche": "本地探店",
+      "edge": "测评对比",
+      "stage": "有少量粉丝，想形成稳定栏目",
+      "bottleneck": "每天都不知道发什么",
+      "assets": "探店照片、菜单价格、排队时间、交通路线截图",
+      "story": "如何把一次普通吃饭拆成路线、避坑、横评和预算内容",
+      "audienceMoment": "想要模板、清单或低成本替代方案",
+      "contentBoundary": "不强行种草，先用测评和对比建立信任",
+      "platform": "视频号",
+      "format": "口播视频",
+      "goal": "接本地商家探店合作",
+      "timeBudget": "8-12 小时",
+      "pain": "想做得像真实朋友推荐，不想让内容变成硬广。"
+    },
+    "whySelected": "覆盖本地生活与视频号信任表达场景，适合检验 Agent 是否能处理探店商业化、路线素材和非硬广表达。",
+    "reviewMetrics": {
+      "views": "2400",
+      "likes": "86",
+      "saves": "38",
+      "comments": "21",
+      "shares": "11",
+      "completionRate": "56%",
+      "commentSamples": "很多人问停车、排队、适不适合一个人去，也有人问有没有一日路线。",
+      "actualPublishedContent": "这家店不适合第一次约会，但很适合一个人周末放空。人均 45，工作日下午不用排队，缺点是座位挤。"
+    },
+    "mustMention": ["广州", "路线", "价格", "排队", "视频号"],
+    "avoid": ["全网最", "闭眼冲", "商家必火"]
+  },
+  {
+    "id": "study_creator_wechat_article",
+    "name": "读书学习公众号",
+    "profile": {
+      "profile": "普通二本学生，靠 Notion 和纸质笔记准备考研",
+      "audience": "想提高学习效率但容易三分钟热度的大学生",
+      "niche": "读书学习",
+      "edge": "方法整理",
+      "stage": "准备起号，还没正式发布",
+      "bottleneck": "不知道自己该做什么定位",
+      "assets": "复习计划表、错题截图、读书笔记、每日打卡记录",
+      "story": "如何从花哨笔记转向能复盘的学习系统",
+      "audienceMoment": "做了一段时间但看不到反馈，开始怀疑方向",
+      "contentBoundary": "不做纯情绪陪伴，每条都要给方法或模板",
+      "platform": "公众号",
+      "format": "长文",
+      "goal": "未来做学习资料包或训练营",
+      "timeBudget": "3-5 小时",
+      "pain": "不知道公众号第一批文章应该写经验、模板还是个人故事。"
+    },
+    "whySelected": "覆盖公众号长文场景，适合检验平台形态差异，避免模型把公众号误写成小红书或短视频脚本。",
+    "reviewMetrics": {
+      "views": "430",
+      "likes": "18",
+      "saves": "0",
+      "comments": "4",
+      "shares": "6",
+      "completionRate": "61%",
+      "commentSamples": "留言说看完有共鸣，但不知道计划表在哪里下载。",
+      "actualPublishedContent": "我以前笔记做得很漂亮，但复盘时找不到重点。后来我把每天的学习记录改成任务、错误、原因、明天动作四栏。"
+    },
+    "mustMention": ["公众号", "复习计划表", "错题", "复盘", "模板"],
+    "avoid": ["小红书首图", "短视频钩子", "保证上岸"]
+  },
+  {
+    "id": "beauty_sensitive_xhs",
+    "name": "敏感肌护肤小红书",
+    "profile": {
+      "profile": "敏感肌女生，过去一年记录了自己换季护肤和空瓶复盘",
+      "audience": "容易跟风买护肤品、但不知道自己肤质适不适合的新手女生",
+      "niche": "美妆护肤",
+      "edge": "测评对比",
+      "stage": "准备商业化，但担心内容变硬广",
+      "bottleneck": "想接商单但怕伤害账号信任",
+      "assets": "空瓶照片、成分表截图、换季过敏记录、不同产品使用前后对比",
+      "story": "如何从乱买热门护肤品，转向记录肤况、成分和使用场景",
+      "audienceMoment": "刷了很多方法，但不知道哪个适合自己",
+      "contentBoundary": "不强行种草，先用测评和对比建立信任",
+      "platform": "小红书",
+      "format": "图文 + 短视频",
+      "goal": "接平价护肤品和美妆工具商单",
+      "timeBudget": "5-8 小时",
+      "pain": "想做真实测评，但不知道如何既有商业价值又不让用户觉得在硬推。"
+    },
+    "whySelected": "覆盖准备商业化但信任敏感的美妆护肤场景，适合检验边界控制、测评可信度和避免过度承诺。",
+    "reviewMetrics": {
+      "views": "5200",
+      "likes": "210",
+      "saves": "146",
+      "comments": "35",
+      "shares": "18",
+      "completionRate": "48%",
+      "commentSamples": "很多人问同款产品敏感肌能不能用，也有人让博主整理一个换季护肤避坑清单。",
+      "actualPublishedContent": "敏感肌别看到热门精华就冲。我会先看成分表，再记录使用前三天的泛红、刺痛和出油变化，空瓶后才决定会不会回购。"
+    },
+    "mustMention": ["敏感肌", "空瓶", "成分表", "换季", "小红书"],
+    "avoid": ["医学诊断", "保证不过敏", "闭眼入"]
+  }
+]

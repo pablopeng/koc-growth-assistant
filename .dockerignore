@@ -1,0 +1,9 @@
+.DS_Store
+.env
+.env.local
+.env.*.local
+.env.production
+data
+node_modules
+upload-to-github
+*.log

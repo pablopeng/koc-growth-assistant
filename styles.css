@@ -390,6 +390,9 @@ button {
 
 .onboarding-card {
   width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--paper);
@@ -407,7 +410,7 @@ button {
 
 .wizard-progress {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 8px;
   margin-bottom: 34px;
 }
@@ -475,6 +478,24 @@ button {
   gap: 2px;
 }
 
+.mini-choice-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.mini-choice-section p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.compact-choice-grid .choice {
+  min-height: 46px;
+  font-size: 14px;
+}
+
 .wizard-actions {
   display: flex;
   justify-content: space-between;
@@ -524,7 +545,7 @@ button {
   width: 52px;
   height: 52px;
   border-radius: 6px;
-  background-image: url("data:image/svg+xml,%3Csvg%20width%3D%22128%22%20height%3D%22128%22%20viewBox%3D%220%200%20128%20128%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20role%3D%22img%22%20aria-labelledby%3D%22title%20desc%22%3E%20%3Ctitle%20id%3D%22title%22%3EGrowthMate%20logo%3C%2Ftitle%3E%20%3Cdesc%20id%3D%22desc%22%3EA%20green%20rounded%20square%20logo%20with%20a%20growth%20path%20and%20the%20letter%20G.%3C%2Fdesc%3E%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%23174F3D%22%2F%3E%20%3Cpath%20d%3D%22M37%2076C37%2055.565%2052.825%2040%2073.08%2040C84.06%2040%2092.566%2044.326%2098.147%2050.716L87.886%2060.349C84.42%2056.422%2079.76%2054.071%2073.53%2054.071C61.736%2054.071%2052.69%2063.164%2052.69%2075.91C52.69%2089.014%2061.824%2098.018%2074.791%2098.018C80.212%2098.018%2084.517%2096.859%2087.977%2094.685V84.792H72.364V71.52H102.333V102.433C95.964%20108.056%2086.743%20112%2074.16%20112C52.561%20112%2037%2096.345%2037%2076Z%22%20fill%3D%22%23F8F4E8%22%2F%3E%20%3Cpath%20d%3D%22M72%2033C78.4%2022.6%2088.6%2018.4%20101%2020.7C94.2%2023.9%2090%2029.2%2088.4%2036.7C85%2033.9%2079.5%2032.4%2072%2033Z%22%20fill%3D%22%23C69A34%22%2F%3E%20%3Cpath%20d%3D%22M88%2035C75.7%2037.3%2066.7%2043.5%2061%2053.7%22%20stroke%3D%22%23C69A34%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22round%22%2F%3E%20%3C%2Fsvg%3E");
+  background-image: url("./growthmate-logo.png");
   background-position: center;
   background-size: cover;
   box-shadow: 0 10px 22px rgba(23, 79, 61, 0.18);
@@ -704,6 +725,10 @@ textarea:focus {
   color: var(--green-dark);
 }
 
+.api-status.demo {
+  color: var(--blue);
+}
+
 .api-status.error {
   color: var(--coral);
 }
@@ -740,7 +765,7 @@ textarea:focus {
 
 .status-strip {
   display: grid;
-  grid-template-columns: repeat(4, auto);
+  grid-template-columns: repeat(5, auto);
   gap: 8px;
 }
 
@@ -755,7 +780,7 @@ textarea:focus {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   padding: 6px;
   border-radius: 6px;
@@ -829,6 +854,41 @@ textarea:focus {
   margin-bottom: 14px;
 }
 
+.mode-notice {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fafbf8;
+}
+
+.mode-notice b {
+  color: var(--green-dark);
+  font-size: 14px;
+}
+
+.mode-notice span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mode-notice.live {
+  border-color: #bed0c5;
+  background: #eef4ef;
+}
+
+.mode-notice.demo {
+  border-color: #c8d8df;
+  background: #eef5f7;
+}
+
+.mode-notice.demo b {
+  color: var(--blue);
+}
+
 .research-item {
   padding: 12px;
   border: 1px solid var(--line);
@@ -847,6 +907,60 @@ textarea:focus {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.agent-trace {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.trace-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 10px;
+  align-items: start;
+  min-height: 92px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fafbf8;
+}
+
+.trace-step::before {
+  content: attr(data-step);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--green-dark);
+  background: #e6eee8;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.trace-step span {
+  align-self: center;
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.trace-step b {
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.trace-step p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .insight-card {
@@ -883,6 +997,94 @@ textarea:focus {
   font-size: 22px;
   font-weight: 900;
   line-height: 1.25;
+}
+
+.diagnosis-card {
+  padding: 22px;
+  background:
+    linear-gradient(135deg, rgba(23, 79, 61, 0.08), transparent 54%),
+    var(--paper);
+}
+
+.diagnosis-head {
+  max-width: 880px;
+  margin-bottom: 18px;
+}
+
+.diagnosis-head h4 {
+  margin: 0 0 8px;
+  color: var(--green-dark);
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.diagnosis-head p {
+  margin: 0;
+  color: #43564b;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.diagnosis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.diagnosis-grid div {
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.diagnosis-grid span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.diagnosis-grid b {
+  color: var(--green-dark);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.strategy-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.strategy-summary article {
+  min-height: 118px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.strategy-summary span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.strategy-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.avoid-tag {
+  color: #6d3b31;
+  background: #f4e8e4;
 }
 
 .muted {
@@ -1380,6 +1582,83 @@ textarea:focus {
   margin-top: 8px;
 }
 
+.review-workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.review-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.review-form,
+.review-output,
+.review-card,
+.empty-review {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.review-form {
+  padding: 18px;
+}
+
+.review-form h4 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.metric-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-output {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.review-card,
+.empty-review {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.review-card h4,
+.empty-review h4 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.review-card p,
+.empty-review p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.review-card ul {
+  margin: 0;
+  padding: 14px 14px 14px 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #405248;
+  background: #fafbf8;
+  line-height: 1.8;
+}
+
+.review-loading {
+  grid-template-columns: auto 1fr;
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1387,6 +1666,10 @@ textarea:focus {
 
   .result-panel {
     min-height: auto;
+  }
+
+  .review-layout {
+    grid-template-columns: 1fr;
   }
 
   .topbar,
@@ -1430,6 +1713,10 @@ textarea:focus {
   .status-strip,
   .choice-grid,
   .research-strip,
+  .agent-trace,
+  .strategy-summary,
+  .diagnosis-grid,
+  .metric-input-grid,
   .loading-steps {
     grid-template-columns: 1fr;
   }

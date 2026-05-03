@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GrowthMate Eval Console</title>
+    <link rel="stylesheet" href="./eval-dashboard.css" />
+  </head>
+  <body>
+    <main class="eval-shell">
+      <header class="eval-header">
+        <div>
+          <p>GrowthMate Eval Console</p>
+          <h1>Agent 质量评测后台</h1>
+        </div>
+        <button id="refreshButton" type="button">刷新</button>
+      </header>
+
+      <section class="summary-grid" id="summaryGrid"></section>
+
+      <nav class="eval-tabs" aria-label="评测平台模块">
+        <button class="eval-tab active" data-view="cases" type="button">评测集管理</button>
+        <button class="eval-tab" data-view="runs" type="button">评测运行</button>
+        <button class="eval-tab" data-view="live" type="button">线上回流</button>
+      </nav>
+
+      <section class="panel" id="primaryPanel">
+        <div class="panel-head">
+          <div>
+            <p id="primaryKicker">Case Set</p>
+            <h2 id="primaryTitle">冷启动评测集</h2>
+          </div>
+          <button id="primaryAction" type="button">刷新</button>
+        </div>
+        <div id="primaryContent"></div>
+      </section>
+
+      <section class="panel" id="rubricPanel">
+        <div class="panel-head">
+          <div>
+            <p>Rubric Overview</p>
+            <h2>评分标准概览</h2>
+          </div>
+        </div>
+        <div id="layerGrid" class="layer-grid"></div>
+      </section>
+    </main>
+
+    <script src="./eval-dashboard.js"></script>
+  </body>
+</html>

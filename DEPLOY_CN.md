@@ -2,6 +2,8 @@
 
 推荐使用腾讯云轻量应用服务器，镜像选择 Ubuntu。部署后可以用服务器公网 IP 访问 Demo。
 
+注意：本项目不是纯静态站点。主应用需要 `/api/generate`、`/api/content`、`/api/review`，评测后台需要 `/api/eval/*`。如果只部署到 GitHub Pages，页面可以打开，但 AI 生成和评测后台数据无法正常工作。参赛提交建议部署 Node 服务版本。
+
 ## 1. 买服务器
 
 建议配置：
@@ -93,6 +95,12 @@ docker run -d --name koc-growth-assistant --env-file .env -p 8080:8080 --restart
 
 ```text
 http://服务器公网IP:8080
+```
+
+评测后台：
+
+```text
+http://服务器公网IP:8080/eval
 ```
 
 健康检查：

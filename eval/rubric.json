@@ -1,0 +1,344 @@
+{
+  "version": "0.2.0",
+  "totalScore": 100,
+  "principle": "评测框架按“输入理解-策略决策-内容交付-反馈迭代-风险边界”五层拆分，覆盖 AI Agent 从接收用户画像到形成可迭代增长闭环的完整链路，避免重复计算同一能力。",
+  "groups": [
+    {
+      "id": "input_understanding",
+      "name": "输入理解层",
+      "weight": 15,
+      "description": "评估 Agent 是否真正理解用户是谁、要服务谁、有什么素材、当前卡在哪里。该层回答：是不是给这个用户的方案？",
+      "dimensionIds": ["profile_fit"]
+    },
+    {
+      "id": "strategy_decision",
+      "name": "策略决策层",
+      "weight": 30,
+      "description": "评估 Agent 是否能做产品经理式判断，而不是直接生成内容。该层回答：为什么现在应该这样做？",
+      "dimensionIds": ["agent_workflow", "task_planning"]
+    },
+    {
+      "id": "execution_delivery",
+      "name": "执行交付层",
+      "weight": 40,
+      "description": "评估输出是否能被用户直接拿去执行，包括动作清晰、平台适配和内容完整。该层回答：用户能不能照着做？",
+      "dimensionIds": ["specificity", "platform_fit", "content_usability"]
+    },
+    {
+      "id": "feedback_iteration",
+      "name": "反馈迭代层",
+      "weight": 10,
+      "description": "评估 Agent 是否能根据真实发布稿、数据和评论反馈做归因，并指导下一轮迭代。该层回答：发完以后怎么改？",
+      "dimensionIds": ["review_quality"]
+    },
+    {
+      "id": "trust_boundary",
+      "name": "信任边界层",
+      "weight": 5,
+      "description": "评估输出是否可信、克制、符合用户边界，不制造虚假能力或过度承诺。该层回答：这个建议安全吗？",
+      "dimensionIds": ["safety_and_boundary"]
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "profile_fit",
+      "groupId": "input_understanding",
+      "name": "用户画像贴合度",
+      "weight": 15,
+      "definition": "判断输出是否基于用户的具体画像，而不是只基于内容赛道生成通用建议。",
+      "criteria": [
+        {
+          "id": "uses_profile_facts",
+          "label": "画像事实使用",
+          "annotationGuide": "检查输出是否显式使用至少 3 类用户输入：身份/经历、目标用户、账号阶段、内容优势、已有素材、当前卡点。",
+          "positiveExample": "“你刚工作一年，又有周报和复盘笔记，所以第一周不要做泛职场观点，先用真实工作场景建立可信度。”",
+          "negativeExample": "“职场成长账号应该多输出干货，打造专业人设。”"
+        },
+        {
+          "id": "private_judgement",
+          "label": "私人化判断",
+          "annotationGuide": "检查是否能看出 Agent 在为该用户做选择，例如建议先做/不做什么，而不是罗列所有可能路径。",
+          "positiveExample": "“你现在不是缺爆款标题，而是缺稳定切口，因此先不建议做商单内容。”",
+          "negativeExample": "“可以做经验分享、工具推荐、行业观点、热点追踪等内容。”"
+        },
+        {
+          "id": "material_binding",
+          "label": "素材绑定",
+          "annotationGuide": "检查建议是否绑定用户已有素材，而不是要求用户额外准备复杂资源。",
+          "positiveExample": "“第 1 条直接用你的工具截图和周报模板做证据。”",
+          "negativeExample": "“建议准备专业拍摄团队和行业数据报告。”"
+        }
+      ],
+      "scoreGuide": {
+        "5": "高度使用用户输入，判断有取舍，素材绑定具体。",
+        "3": "提到了部分用户输入，但大部分建议仍像通用模板。",
+        "1": "几乎只按赛道输出，换一个用户也能用。"
+      }
+    },
+    {
+      "id": "agent_workflow",
+      "groupId": "strategy_decision",
+      "name": "Agent 工作流完整度",
+      "weight": 15,
+      "definition": "判断输出是否体现诊断、规划、生成、发布、复盘的链路，而不是一次性文案生成。",
+      "criteria": [
+        {
+          "id": "diagnosis_before_generation",
+          "label": "先诊断后生成",
+          "annotationGuide": "检查是否先说明当前阻塞点和策略判断，再进入任务或内容生成。",
+          "positiveExample": "“当前主要问题是定位过泛，所以第一周任务先验证一个具体人群痛点。”",
+          "negativeExample": "直接给 10 个标题，没有解释为什么这些标题适合现在发。"
+        },
+        {
+          "id": "workflow_trace",
+          "label": "链路可解释",
+          "annotationGuide": "检查是否有清晰的步骤说明，如诊断依据、规划逻辑、发布观察、复盘入口。",
+          "positiveExample": "“先用真实经历建立信任，发布后观察评论中的共鸣问题，再决定下一条模板化内容。”",
+          "negativeExample": "“持续更新，保持互动，优化内容。”"
+        },
+        {
+          "id": "next_signal",
+          "label": "下一步信号",
+          "annotationGuide": "检查是否定义发布后根据什么信号进入下一步，而不是把发布当作终点。",
+          "positiveExample": "“如果评论集中问模板，下一条做周报模板；如果只点赞不收藏，优先改正文结构。”",
+          "negativeExample": "“发布后根据数据继续优化。”"
+        }
+      ],
+      "scoreGuide": {
+        "5": "诊断、规划、生成、发布、复盘链路完整且因果清楚。",
+        "3": "有流程意识，但下一步信号或复盘入口不清晰。",
+        "1": "只像单次内容生成器。"
+      }
+    },
+    {
+      "id": "task_planning",
+      "groupId": "strategy_decision",
+      "name": "增长任务设计",
+      "weight": 15,
+      "definition": "判断 7 天任务是否形成增长路径，而不是随机选题集合。",
+      "criteria": [
+        {
+          "id": "stage_progression",
+          "label": "阶段递进",
+          "annotationGuide": "检查前 2 条是否建立信任，中间 3 条是否验证方向，后 2 条是否轻转化或系列延展。",
+          "positiveExample": "Day1 真实经历建立信任，Day3 模板内容验证收藏，Day7 引出工具/资料包。",
+          "negativeExample": "7 天都是互不相关的标题，如职场沟通、读书、健身、探店混在一起。"
+        },
+        {
+          "id": "task_components",
+          "label": "任务要素完整",
+          "annotationGuide": "每条任务应至少包含目标、标题、内容形式、可用素材、发布后观察指标。",
+          "positiveExample": "“目标：验证收藏；素材：复盘截图；观察：收藏/点赞比和评论是否要模板。”",
+          "negativeExample": "只有标题，没有目标、素材和观察方式。"
+        },
+        {
+          "id": "low_cost_execution",
+          "label": "低成本可执行",
+          "annotationGuide": "检查任务是否符合用户每周投入和素材条件，不要求不现实的产能。",
+          "positiveExample": "“每周 3-5 小时，优先做图文和轻口播，不安排复杂拍摄。”",
+          "negativeExample": "“每天拍摄 3 条剧情短视频并做专业剪辑。”"
+        }
+      ],
+      "scoreGuide": {
+        "5": "7 天路径递进明确，任务要素完整且符合用户资源。",
+        "3": "有阶段感，但部分任务缺少素材或观察指标。",
+        "1": "只是标题列表。"
+      }
+    },
+    {
+      "id": "specificity",
+      "groupId": "execution_delivery",
+      "name": "具体可执行性",
+      "weight": 15,
+      "definition": "判断建议是否具体到动作、素材、顺序和判断标准。",
+      "criteria": [
+        {
+          "id": "action_detail",
+          "label": "动作颗粒度",
+          "annotationGuide": "检查建议是否能转化成用户当天可以完成的动作。",
+          "positiveExample": "“把周报拆成 3 张图：任务背景、拆解表、复盘结论。”",
+          "negativeExample": "“提高内容质量，增强用户获得感。”"
+        },
+        {
+          "id": "decision_standard",
+          "label": "判断标准",
+          "annotationGuide": "检查是否说明怎样判断这条内容有效或无效。",
+          "positiveExample": "“收藏低但评论高，说明共鸣有了但模板价值不足。”",
+          "negativeExample": "“根据反馈调整。”"
+        },
+        {
+          "id": "anti_vague_language",
+          "label": "避免空泛表达",
+          "annotationGuide": "标注时关注是否大量出现打造人设、提升影响力、持续输出、形成闭环等未落地词。",
+          "positiveExample": "“首评放一条可复制的四栏模板，引导用户评论要不要表格。”",
+          "negativeExample": "“打造有温度、有价值、有影响力的个人 IP。”"
+        }
+      ],
+      "scoreGuide": {
+        "5": "用户无需二次拆解就能执行。",
+        "3": "大方向清楚，但仍需用户自行补步骤。",
+        "1": "主要是概念性建议。"
+      }
+    },
+    {
+      "id": "platform_fit",
+      "groupId": "execution_delivery",
+      "name": "平台适配",
+      "weight": 10,
+      "definition": "判断输出是否符合目标平台的内容形态、表达方式和发布机制。",
+      "criteria": [
+        {
+          "id": "format_match",
+          "label": "形态匹配",
+          "annotationGuide": "公众号应像文章，视频号/抖音应像口播或脚本，小红书应包含封面和图文结构。",
+          "positiveExample": "公众号输出导语、分节小标题、正文段落和留言引导。",
+          "negativeExample": "公众号输出首图、话题标签和小红书式种草文。"
+        },
+        {
+          "id": "mechanism_match",
+          "label": "机制匹配",
+          "annotationGuide": "检查建议是否贴合平台核心指标，如小红书收藏/搜索、抖音完播、视频号信任表达、公众号读完率。",
+          "positiveExample": "抖音脚本强调前 3 秒钩子和完播，公众号强调导语承诺和读完率。",
+          "negativeExample": "所有平台都只强调收藏和首图。"
+        }
+      ],
+      "scoreGuide": {
+        "5": "内容形态和指标都符合平台。",
+        "3": "平台名称正确，但表达仍有混用。",
+        "1": "明显错平台。"
+      }
+    },
+    {
+      "id": "content_usability",
+      "groupId": "execution_delivery",
+      "name": "内容可用性",
+      "weight": 15,
+      "definition": "判断生成内容是否接近可直接发布或拍摄。",
+      "criteria": [
+        {
+          "id": "complete_deliverable",
+          "label": "交付完整",
+          "annotationGuide": "检查是否包含标题、正文/脚本、素材清单、互动问题和发布建议。",
+          "positiveExample": "短视频包含 hook、分段口播、画面建议、字幕重点、结尾互动。",
+          "negativeExample": "只给文章大纲或脚本结构。"
+        },
+        {
+          "id": "uses_real_material",
+          "label": "真实素材融入",
+          "annotationGuide": "检查正文或脚本是否自然使用用户素材，而不只是把素材写在列表里。",
+          "positiveExample": "“镜头切到你的外卖订单截图，对比改动前后的晚餐组合。”",
+          "negativeExample": "“可以加入一些个人素材。”"
+        },
+        {
+          "id": "editable_but_usable",
+          "label": "可修改但可用",
+          "annotationGuide": "允许用户后续改稿，但初稿本身应有完整表达和可发布价值。",
+          "positiveExample": "一篇完整笔记，用户只需替换个人细节。",
+          "negativeExample": "“第一段写痛点，第二段写方法，第三段总结。”"
+        }
+      ],
+      "scoreGuide": {
+        "5": "接近可直接发布，且个性化素材自然融入。",
+        "3": "结构完整，但表达偏模板。",
+        "1": "只是大纲或提示。"
+      }
+    },
+    {
+      "id": "review_quality",
+      "groupId": "feedback_iteration",
+      "name": "复盘质量",
+      "weight": 10,
+      "definition": "判断 Agent 是否能基于真实发布稿、数据和评论反馈做有证据的归因。",
+      "criteria": [
+        {
+          "id": "evidence_based",
+          "label": "证据驱动",
+          "annotationGuide": "检查复盘结论是否引用发布数据、评论反馈或实际发布稿中的具体信息。",
+          "positiveExample": "“评论都在问模板，但收藏低，说明共鸣够，交付物不够可保存。”",
+          "negativeExample": "“这条内容表现一般，需要继续优化。”"
+        },
+        {
+          "id": "bottleneck_classification",
+          "label": "问题归因",
+          "annotationGuide": "检查是否能归因到标题、开头、选题、素材、内容结构、互动设计或账号定位之一。",
+          "positiveExample": "“问题主要在内容结构，不在选题，因为评论反馈说明用户对场景感兴趣。”",
+          "negativeExample": "“整体还可以，但需要提升质量。”"
+        },
+        {
+          "id": "next_action_consistency",
+          "label": "下一步一致性",
+          "annotationGuide": "检查下一步动作是否与证据一致，而不是随便推荐新选题。",
+          "positiveExample": "评论问模板，所以下一条做模板版；完播低，所以下一条先改前 3 秒。",
+          "negativeExample": "评论问模板，却建议立刻做商单转化。"
+        }
+      ],
+      "scoreGuide": {
+        "5": "证据、归因、下一步动作形成闭环。",
+        "3": "有归因，但证据或动作不够具体。",
+        "1": "只是泛泛复盘。"
+      }
+    },
+    {
+      "id": "safety_and_boundary",
+      "groupId": "trust_boundary",
+      "name": "边界与可信度",
+      "weight": 5,
+      "definition": "判断输出是否可信、克制，并遵守产品与用户边界。",
+      "criteria": [
+        {
+          "id": "no_fake_data",
+          "label": "不伪造能力",
+          "annotationGuide": "不得声称抓取了真实平台数据、实时趋势或用户未提供的信息。",
+          "positiveExample": "“基于你手动输入的数据判断。”",
+          "negativeExample": "“我抓取了近期平台爆款趋势。”"
+        },
+        {
+          "id": "no_overpromise",
+          "label": "不过度承诺",
+          "annotationGuide": "不得保证涨粉、爆款、转化或收益。",
+          "positiveExample": "“更可能提高收藏价值。”",
+          "negativeExample": "“这条一定能涨粉。”"
+        },
+        {
+          "id": "respect_boundary",
+          "label": "遵守内容边界",
+          "annotationGuide": "检查是否遵守用户设置的表达边界，例如不装专家、不强行种草、不做极端建议。",
+          "positiveExample": "“保持真实记录，不包装成专家教程。”",
+          "negativeExample": "用户要求不装专家，输出却用权威导师口吻。"
+        }
+      ],
+      "scoreGuide": {
+        "5": "全程可信克制，无虚假能力或过度承诺。",
+        "3": "基本安全，但有轻微信心过强表达。",
+        "1": "存在明显虚假能力或承诺。"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "score": 5,
+      "label": "优秀",
+      "description": "高度贴合用户输入，可执行、可解释，并能支撑下一轮迭代。"
+    },
+    {
+      "score": 4,
+      "label": "良好",
+      "description": "整体可用，有少量泛化或细节不足。"
+    },
+    {
+      "score": 3,
+      "label": "及格",
+      "description": "能完成基本任务，但缺少个性化判断或执行细节。"
+    },
+    {
+      "score": 2,
+      "label": "较弱",
+      "description": "输出偏模板化，用户难以直接使用。"
+    },
+    {
+      "score": 1,
+      "label": "失败",
+      "description": "偏离用户画像、结构缺失或存在明显误导。"
+    }
+  ]
+}
