@@ -1,4 +1,5 @@
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { buildEvalCaseFromProfile, scoreCase, summarize } = require("./eval/evaluator");
@@ -22,6 +23,7 @@ const rateLimitWindowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
 const rateLimitMax = Number(process.env.RATE_LIMIT_MAX || 12);
 const kimiTimeoutMs = Number(process.env.KIMI_TIMEOUT_MS || 180_000);
 const rateLimitStore = new Map();
+const generationJobs = new Map();
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -44,6 +46,31 @@ const server = http.createServer(async (req, res) => {
       saveGeneration(payload, result);
       console.log(`[generate] completed in ${Date.now() - startedAt}ms`);
       sendJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/generate/start") {
+      if (!checkRateLimit(req, res)) return;
+      const payload = await readJson(req);
+      const result = startGenerationJob(payload);
+      sendJson(res, 202, result);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/generate/status") {
+      const id = url.searchParams.get("id");
+      const job = id ? generationJobs.get(id) : null;
+      if (!job) {
+        sendJson(res, 404, { error: "Job not found", message: "生成任务不存在或已过期。" });
+        return;
+      }
+      sendJson(res, 200, {
+        id: job.id,
+        status: job.status,
+        elapsedMs: Date.now() - job.startedAt,
+        result: job.result || null,
+        error: job.error || null
+      });
       return;
     }
 
@@ -232,6 +259,39 @@ function checkRateLimit(req, res) {
   return true;
 }
 
+function startGenerationJob(payload) {
+  const id = crypto.randomUUID();
+  const job = {
+    id,
+    status: "running",
+    startedAt: Date.now(),
+    result: null,
+    error: null
+  };
+  generationJobs.set(id, job);
+
+  generatePlan(payload)
+    .then((result) => {
+      saveGeneration(payload, result);
+      job.status = "completed";
+      job.result = result;
+      console.log(`[generate-job] ${id} completed in ${Date.now() - job.startedAt}ms`);
+    })
+    .catch((error) => {
+      job.status = "failed";
+      job.error = {
+        message: error.message,
+        code: error.code || "SERVER_ERROR"
+      };
+      console.error(`[generate-job] ${id} failed after ${Date.now() - job.startedAt}ms`, error);
+    })
+    .finally(() => {
+      setTimeout(() => generationJobs.delete(id), 10 * 60_000);
+    });
+
+  return { id, status: job.status };
+}
+
 async function generatePlan(data) {
   return callKimi([
     {
@@ -247,7 +307,7 @@ async function generatePlan(data) {
       role: "user",
       content: buildPrompt(data)
     }
-  ]).then((content) => normalizePlan(parseModelJson(content), data));
+  ], { maxTokens: 3600 }).then((content) => normalizePlan(parseModelJson(content), data));
 }
 
 async function generateContent(data) {
@@ -365,12 +425,13 @@ ${platformGuide.plan}
 
 生成要求：
 1. 只输出严格 JSON，不要 markdown。
-2. 不要只根据赛道给通用建议。每个定位、选题和发布建议都必须绑定至少一条用户输入，例如个人背景、用户时刻、素材、经历、内容边界。
+2. 输出必须短而具体，不要长段落；所有字符串控制在 10-45 个汉字，positioning.diagnosis/playbook 控制在 70 字以内。
 3. 必须绑定用户输入里的背景、目标人群、用户时刻、已有素材或变现目标，不能泛泛讲赛道。
 4. 冷启动观察指标只能写低样本信号，例如“是否有人追问模板”“收藏/点赞相对变化”，不要写绝对高 KPI。
 5. research 只能写“基于平台公开内容观察/用户素材推断”，不能伪装真实抓取数据。
 6. topics 和 tasks 都必须 7 个；前 2 条建立信任，中间 3 条验证方向，最后 2 条轻转化/系列化。
-7. tasks 必须和 topics 一一对应，但表达成用户每天要完成的增长任务。每个任务都要有发布后观察指标、下一步判断信号和 commentPlan。
+7. tasks 必须和 topics 一一对应，但每条任务只写一句原因、一句素材、一句观察信号、一句 nextSignal。
+8. commentPlan 每条只给 2 个 expectedComments，pinnedReply 只写一句话。
 
 请输出 JSON，结构必须是：
 {
@@ -393,7 +454,7 @@ ${platformGuide.plan}
   ],
   "positioning": {
     "headline": "一句账号定位",
-    "diagnosis": "60-90字，说明为什么不能做泛方向",
+    "diagnosis": "70字以内，说明为什么不能做泛方向",
     "tags": ["标签1", "标签2", "标签3", "标签4"],
     "metrics": [
       {"value": "4", "label": "内容支柱"},
@@ -402,7 +463,7 @@ ${platformGuide.plan}
     ],
     "userNeed": "一句真实需求",
     "pillars": ["内容支柱1", "内容支柱2", "内容支柱3", "内容支柱4"],
-    "playbook": "60-90字，说明前两周先做什么、不做什么"
+    "playbook": "70字以内，说明前两周先做什么、不做什么"
   },
   "topics": [
     {
@@ -424,13 +485,13 @@ ${platformGuide.plan}
       "title": "任务对应选题标题",
       "category": "任务类别",
       "contentType": "内容形式",
-      "whyThisTask": "为什么今天应该做这条任务",
-      "material": "可以直接使用的素材",
-      "publishMetric": "发布后重点观察的数据",
-      "nextSignal": "看到什么反馈后下一条怎么走",
+      "whyThisTask": "一句原因",
+      "material": "一句素材",
+      "publishMetric": "一句观察信号",
+      "nextSignal": "一句下一步判断",
       "commentPlan": {
-        "expectedComments": ["可能评论1", "可能评论2", "可能评论3"],
-        "pinnedReply": "建议置顶回复或结尾提问"
+        "expectedComments": ["可能评论1", "可能评论2"],
+        "pinnedReply": "一句置顶回复或结尾提问"
       },
       "interaction": "收藏/评论/私信/转发"
     }

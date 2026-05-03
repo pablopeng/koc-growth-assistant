@@ -245,6 +245,42 @@ const postJsonWithRetry = async (url, payload, options = {}) => {
   throw lastError;
 };
 
+const getJson = async (url) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    const message = error?.message || error?.error || `请求失败（HTTP ${response.status}）`;
+    const apiError = new Error(message);
+    apiError.status = response.status;
+    throw apiError;
+  }
+  return response.json();
+};
+
+const generatePlanAsync = async (payload, requestId) => {
+  const started = await postJsonWithRetry("/api/generate/start", payload, { attempts: 1 });
+  const jobId = started.id;
+  if (!jobId) throw new Error("生成任务创建失败。");
+
+  const maxPolls = 150;
+  for (let index = 0; index < maxPolls; index += 1) {
+    if (generationRequestId !== requestId) throw new Error("生成请求已取消。");
+    await delay(index < 1 ? 1200 : 2000);
+    const status = await getJson(`/api/generate/status?id=${encodeURIComponent(jobId)}`);
+    if (status.status === "completed") return status.result;
+    if (status.status === "failed") {
+      const message = status.error?.message || "生成任务失败。";
+      throw new Error(message);
+    }
+    const seconds = Math.max(1, Math.round((status.elapsedMs || 0) / 1000));
+    if (seconds > 20 && seconds % 10 < 2) {
+      setApiStatus(`Agent 仍在生成真实方案，已等待 ${seconds} 秒...`, "live");
+    }
+  }
+
+  throw new Error("生成任务等待超时，请稍后重试。");
+};
+
 const renderProfileSummary = () => {
   const data = getSafeFormData();
   const el = $("profileSummary");
@@ -1328,7 +1364,7 @@ const generateWithApi = async (resetTopic = true) => {
     if (isFileMode()) {
       throw new Error("当前是 file:// 静态预览，真实 API 需要打开 http://localhost:5173/ 或线上部署地址。");
     }
-    const result = sanitizeForHtml(await postJsonWithRetry("/api/generate", data));
+    const result = sanitizeForHtml(await generatePlanAsync(data, requestId));
     if (generationRequestId !== requestId) return;
     aiPlan = result;
     appMode = "live";
