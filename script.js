@@ -1422,8 +1422,11 @@ const generateReview = async () => {
 };
 
 const friendlyApiError = (error) => {
+  const message = String(error?.message || "");
   if (error?.status === 429) return "请求过于频繁，请稍后再试。";
-  if (String(error?.message || "").includes("KIMI_API_KEY")) return "服务端还没有配置 API Key。";
+  if (message.includes("KIMI_API_KEY")) return "服务端还没有配置 API Key。";
+  if (message.includes("Kimi API timeout")) return "Kimi 响应超时，请稍后重试或提高 KIMI_TIMEOUT_MS。";
+  if (message.includes("Kimi API")) return message;
   if (isFileMode()) return "当前是本地文件预览，需要通过 localhost 或线上地址访问真实 API。";
   return "真实生成暂时不可用，已保留完整演示流程。";
 };

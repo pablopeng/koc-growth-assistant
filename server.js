@@ -28,7 +28,8 @@ const mimeTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml; charset=utf-8"
+  ".svg": "image/svg+xml; charset=utf-8",
+  ".png": "image/png"
 };
 
 const server = http.createServer(async (req, res) => {
@@ -99,11 +100,23 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/api/health") {
-      sendJson(res, 200, {
+      const health = {
         ok: true,
         model,
         kimiConfigured: Boolean(process.env.KIMI_API_KEY)
-      });
+      };
+      if (url.searchParams.get("probe") === "1") {
+        try {
+          const content = await callKimi([
+            { role: "system", content: "你是服务健康检查助手。只输出严格 JSON，不要 markdown。" },
+            { role: "user", content: "请输出 {\"ok\":true,\"message\":\"pong\"}" }
+          ]);
+          health.kimiProbe = { ok: true, sample: content.slice(0, 200) };
+        } catch (error) {
+          health.kimiProbe = { ok: false, error: error.message };
+        }
+      }
+      sendJson(res, 200, health);
       return;
     }
 
